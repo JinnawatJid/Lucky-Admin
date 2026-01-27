@@ -21,11 +21,12 @@ import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Search, 
-  Plus, 
-  Phone, 
-  Mail, 
+import * as AddressService from "@/services/addressService";
+import {
+  Search,
+  Plus,
+  Phone,
+  Mail,
   MapPin,
   Calendar,
   Package,
@@ -42,37 +43,11 @@ import {
   Users
 } from "lucide-react";
 
-// Thai provinces list
-const thaiProvinces = [
-  "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น",
-  "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย",
-  "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา",
-  "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์",
-  "ปทุมธานี", "ประจวบคีรีขันธ์", "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พังงา",
-  "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม",
-  "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี",
-  "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ",
-  "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี",
-  "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ",
-  "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
-];
-
-// Mock district and subdistrict data (for demonstration - Dev will need to replace with real API)
-const mockDistricts: Record<string, string[]> = {
-  "กรุงเทพมหานคร": ["เขตพระนคร", "เขตดุสิต", "เขตหนองจอก", "เขตบางรัก", "เขตบางเขน", "เขตบางกะปิ", "เขตปทุมวัน", "เขตป้อมปราบศัตรูพ่าย", "เขตพระโขนง", "เขตมีนบุรี"],
-  "ชลบุรี": ["เมืองชลบุรี", "บ้านบึง", "หนองใหญ่", "บางละมุง", "พานทอง", "พนัสนิคม", "ศรีราชา", "เกาะสีชัง", "สัตหีบ", "บ่อทอง"],
-  "เชียงใหม่": ["เมืองเชียงใหม่", "จอมทอง", "แม่แจ่ม", "เชียงดาว", "ดอยสะเก็ด", "แม่แตง", "แม่ริม", "สะเมิง", "ฝาง", "แม่อาย"],
-};
-
-const mockSubdistricts: Record<string, string[]> = {
-  "เขตพระนคร": ["แขวงพระบรมมหาราชวัง", "แขวงวังบูรพาภิรมย์", "แขวงวัดราชบพิธ", "แขวงสำราญราษฎร์", "แขวงศาลเจ้าพ่อเสือ"],
-  "เมืองชลบุรี": ["ตำบลบางปลาสร้อย", "ตำบลมะขามหย่ง", "ตำบลบ้านโขด", "ตำบลแสนสุข", "ตำบลบ้านสวน"],
-  "เมืองเชียงใหม่": ["ตำบลศรีภูมิ", "ตำบลพระสิงห์", "ตำบลหายยา", "ตำบลช้างม่อย", "ตำบลช้างคลาน"],
-};
+// ข้อมูลที่อยู่จะถูกดึงจาก API แทน hardcoded data
 
 // Product tags for multi-select
 const productTags = [
-  "เหรียญ", "ถ้วยรางวัล", "โล่", "เสื้อ", "สายคล้อง", 
+  "เหรียญ", "ถ้วยรางวัล", "โล่", "เสื้อ", "สายคล้อง",
   "แก้ว", "หมวก", "กระเป๋า", "ป้ายพรีเมียม", "พวงกุญแจ",
   "ที่เปิดขวด", "แม่เหล็ก", "ที่ทับกระดาษ"
 ];
@@ -114,11 +89,11 @@ const generateMockCRMData = (index: number) => {
   ];
   const owners = ['สมชาย', 'สมหญิง', 'วิภา', 'ธนา', 'กมล'];
   const products = [['เหรียญ', 'ถ้วยรางวัล'], ['โล่', 'เสื้อ'], ['สายคล้อง'], ['แก้ว', 'หมวก'], ['เหรียญ']];
-  
+
   const today = new Date();
   const futureDate = new Date(today);
   futureDate.setDate(today.getDate() + Math.floor(Math.random() * 14) + 1);
-  
+
   return {
     salesStatus: salesStatuses[index % salesStatuses.length],
     nextAction: nextActions[index % nextActions.length],
@@ -163,42 +138,49 @@ export default function CustomerManagement() {
   const [loading, setLoading] = useState(true);
   const [sameAddress, setSameAddress] = useState(false);
   const [selectedProductTags, setSelectedProductTags] = useState<string[]>([]);
-  
+
+  // States สำหรับข้อมูลที่อยู่จาก API
+  const [provinces, setProvinces] = useState<string[]>([]);
+  const [billingDistricts, setBillingDistricts] = useState<string[]>([]);
+  const [billingSubdistricts, setBillingSubdistricts] = useState<string[]>([]);
+  const [shippingDistricts, setShippingDistricts] = useState<string[]>([]);
+  const [shippingSubdistricts, setShippingSubdistricts] = useState<string[]>([]);
+
   const [newCustomer, setNewCustomer] = useState({
     // ส่วนที่ 1: ข้อมูลบริษัท/องค์กร
     companyName: "",
     customerType: "เจ้าของงาน",
     taxId: "",
-    
+
     // ที่อยู่ออกใบกำกับภาษี
     billingProvince: "",
     billingDistrict: "",
     billingSubdistrict: "",
     billingPostcode: "",
     billingAddress: "",
-    
+
     // ที่อยู่จัดส่ง
     shippingProvince: "",
     shippingDistrict: "",
     shippingSubdistrict: "",
     shippingPostcode: "",
     shippingAddress: "",
-    
+
     // ส่วนที่ 2: ข้อมูลผู้ติดต่อหลัก
     contactName: "",
     phoneNumbers: [""],
     emails: [""],
     lineId: "",
-    
+
     // ข้อมูลผู้ติดต่อเพิ่มเติม
-    additionalContacts: [] as Array<{contactName: string; lineId: string; phoneNumber: string; email: string}>,
-    
+    additionalContacts: [] as Array<{ contactName: string; lineId: string; phoneNumber: string; email: string }>,
+
     // ส่วนที่ 3: การนำเสนอ
     presentationStatus: "เสนอขาย",
     contactCount: 1,
     lastContactDate: new Date(),
     interestedProducts: [] as string[],
-    
+
     // ส่วนที่ 4: ข้อมูลภายใน
     responsiblePerson: "พนักงานขายปัจจุบัน",
     customerStatus: "ลูกค้าใหม่",
@@ -208,15 +190,108 @@ export default function CustomerManagement() {
   });
   const { toast } = useToast();
 
-  // Get available districts based on selected province
-  const getDistricts = (province: string) => {
-    return mockDistricts[province] || [];
-  };
+  // โหลดจังหวัดทั้งหมดเมื่อ component mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      const provinceList = await AddressService.getProvinces();
+      setProvinces(provinceList);
+    };
+    loadProvinces();
+  }, []);
 
-  // Get available subdistricts based on selected district
-  const getSubdistricts = (district: string) => {
-    return mockSubdistricts[district] || [];
-  };
+  // โหลดอำเภอเมื่อเลือกจังหวัดสำหรับที่อยู่ออกใบกำกับภาษี
+  useEffect(() => {
+    const loadDistricts = async () => {
+      console.log('🔄 [Billing] useEffect triggered, province:', newCustomer.billingProvince);
+
+      if (newCustomer.billingProvince) {
+        try {
+          console.log('📍 [Billing] Loading districts for:', newCustomer.billingProvince);
+          const districtList = await AddressService.getDistricts(newCustomer.billingProvince);
+          console.log('✅ [Billing] Districts loaded:', districtList.length, districtList);
+          setBillingDistricts(districtList);
+        } catch (error) {
+          console.error('❌ [Billing] Error loading districts:', error);
+          setBillingDistricts([]);
+        }
+      } else {
+        console.log('⚠️ [Billing] No province selected, clearing districts');
+        setBillingDistricts([]);
+        setBillingSubdistricts([]);
+      }
+    };
+    loadDistricts();
+  }, [newCustomer.billingProvince]);
+
+  // โหลดตำบลเมื่อเลือกอำเภอสำหรับที่อยู่ออกใบกำกับภาษี
+  useEffect(() => {
+    const loadSubdistricts = async () => {
+      if (newCustomer.billingProvince && newCustomer.billingDistrict) {
+        const subdistrictList = await AddressService.getSubdistricts(
+          newCustomer.billingProvince,
+          newCustomer.billingDistrict
+        );
+        setBillingSubdistricts(subdistrictList);
+
+        // หากเลือกครบ ให้ดึงรหัสไปรษณีย์อัตโนมัติ
+        if (newCustomer.billingSubdistrict) {
+          const zipCode = await AddressService.getZipCode(
+            newCustomer.billingProvince,
+            newCustomer.billingDistrict,
+            newCustomer.billingSubdistrict
+          );
+          if (zipCode) {
+            setNewCustomer(prev => ({ ...prev, billingPostcode: zipCode }));
+          }
+        }
+      } else {
+        setBillingSubdistricts([]);
+      }
+    };
+    loadSubdistricts();
+  }, [newCustomer.billingProvince, newCustomer.billingDistrict, newCustomer.billingSubdistrict]);
+
+  // โหลดอำเภอเมื่อเลือกจังหวัดสำหรับที่อยู่จัดส่ง
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (newCustomer.shippingProvince && !sameAddress) {
+        const districtList = await AddressService.getDistricts(newCustomer.shippingProvince);
+        setShippingDistricts(districtList);
+      } else {
+        setShippingDistricts([]);
+        setShippingSubdistricts([]);
+      }
+    };
+    loadDistricts();
+  }, [newCustomer.shippingProvince, sameAddress]);
+
+  // โหลดตำบลเมื่อเลือกอำเภอสำหรับที่อยู่จัดส่ง
+  useEffect(() => {
+    const loadSubdistricts = async () => {
+      if (newCustomer.shippingProvince && newCustomer.shippingDistrict && !sameAddress) {
+        const subdistrictList = await AddressService.getSubdistricts(
+          newCustomer.shippingProvince,
+          newCustomer.shippingDistrict
+        );
+        setShippingSubdistricts(subdistrictList);
+
+        // หากเลือกครบ ให้ดึงรหัสไปรษณีย์อัตโนมัติ
+        if (newCustomer.shippingSubdistrict) {
+          const zipCode = await AddressService.getZipCode(
+            newCustomer.shippingProvince,
+            newCustomer.shippingDistrict,
+            newCustomer.shippingSubdistrict
+          );
+          if (zipCode) {
+            setNewCustomer(prev => ({ ...prev, shippingPostcode: zipCode }));
+          }
+        }
+      } else {
+        setShippingSubdistricts([]);
+      }
+    };
+    loadSubdistricts();
+  }, [newCustomer.shippingProvince, newCustomer.shippingDistrict, newCustomer.shippingSubdistrict, sameAddress]);
 
   // Handle same address toggle
   useEffect(() => {
@@ -233,50 +308,82 @@ export default function CustomerManagement() {
   }, [sameAddress, newCustomer.billingProvince, newCustomer.billingDistrict, newCustomer.billingSubdistrict, newCustomer.billingPostcode, newCustomer.billingAddress]);
 
   // Fetch customers from database
+  // const fetchCustomers = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const { data, error } = await supabase
+  //       .from('customers')
+  //       .select('*')
+  //       .order('created_at', { ascending: false });
+
+  //     if (error) {
+  //       console.error('Error fetching customers:', error);
+  //       toast({
+  //         title: "เกิดข้อผิดพลาด",
+  //         description: "ไม่สามารถดึงข้อมูลลูกค้าได้",
+  //         variant: "destructive"
+  //       });
+  //       return;
+  //     }
+
+  //     // Transform data to match interface with mock CRM data
+  //     const transformedCustomers: Customer[] = data.map((customer, index) => {
+  //       const mockCRM = generateMockCRMData(index);
+  //       return {
+  //         id: customer.id,
+  //         name: customer.company_name,
+  //         contact: customer.contact_name,
+  //         phone: customer.phone_numbers?.[0] || '',
+  //         email: customer.emails?.[0] || '',
+  //         address: customer.province || '',
+  //         businessType: customer.business_type || 'ไม่ระบุ',
+  //         totalOrders: customer.total_orders,
+  //         totalValue: customer.total_value,
+  //         lastContact: customer.last_contact_date?.split('T')[0] || '',
+  //         status: customer.customer_status,
+  //         salesStatus: mockCRM.salesStatus,
+  //         nextAction: mockCRM.nextAction,
+  //         nextActionDate: mockCRM.nextActionDate,
+  //         salesOwner: mockCRM.salesOwner,
+  //         interestedProducts: mockCRM.interestedProducts
+  //       };
+  //     });
+
+  //     setCustomers(transformedCustomers);
+  //   } catch (error) {
+  //     console.error('Error:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const response = await fetch('https://finfinphone.com/api-lucky/admin/get_customers.php');
+      const data = await response.json();
 
-      if (error) {
-        console.error('Error fetching customers:', error);
-        toast({
-          title: "เกิดข้อผิดพลาด",
-          description: "ไม่สามารถดึงข้อมูลลูกค้าได้",
-          variant: "destructive"
-        });
-        return;
-      }
+      // แปลงข้อมูลจาก PHP ให้ตรงกับรูปแบบที่ UI ต้องการ (Interface Customer)
+      const transformedData = data.map(item => ({
+        id: item.id,
+        name: item.company_name,
+        contact: item.contact_name,
+        phone: item.phone_numbers[0] || '-', // เอาเบอร์แรกมาโชว์
+        email: item.emails[0] || '-',        // เอาอีเมลแรกมาโชว์
+        address: item.billing_province || '-',
+        businessType: item.customer_type || 'ไม่ระบุ',
+        totalOrders: parseInt(item.total_orders) || 0,
+        totalValue: parseFloat(item.total_value) || 0,
+        lastContact: item.last_contact_date ? item.last_contact_date.split(' ')[0] : '-',
+        status: item.customer_status || 'ลูกค้าใหม่',
+        salesStatus: item.presentation_status || 'ใหม่',
+        salesOwner: item.responsible_person || 'ไม่ระบุ',
+        interestedProducts: item.interested_products || []
+      }));
 
-      // Transform data to match interface with mock CRM data
-      const transformedCustomers: Customer[] = data.map((customer, index) => {
-        const mockCRM = generateMockCRMData(index);
-        return {
-          id: customer.id,
-          name: customer.company_name,
-          contact: customer.contact_name,
-          phone: customer.phone_numbers?.[0] || '',
-          email: customer.emails?.[0] || '',
-          address: customer.province || '',
-          businessType: customer.business_type || 'ไม่ระบุ',
-          totalOrders: customer.total_orders,
-          totalValue: customer.total_value,
-          lastContact: customer.last_contact_date?.split('T')[0] || '',
-          status: customer.customer_status,
-          salesStatus: mockCRM.salesStatus,
-          nextAction: mockCRM.nextAction,
-          nextActionDate: mockCRM.nextActionDate,
-          salesOwner: mockCRM.salesOwner,
-          interestedProducts: mockCRM.interestedProducts
-        };
-      });
-
-      setCustomers(transformedCustomers);
+      setCustomers(transformedData);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -363,7 +470,7 @@ export default function CustomerManagement() {
     }
     setNewCustomer(prev => ({
       ...prev,
-      additionalContacts: prev.additionalContacts.map((contact, i) => 
+      additionalContacts: prev.additionalContacts.map((contact, i) =>
         i === index ? { ...contact, [field]: formattedValue } : contact
       )
     }));
@@ -398,128 +505,66 @@ export default function CustomerManagement() {
     }
 
     try {
-      // Filter out empty phone numbers and emails
-      const filteredPhoneNumbers = newCustomer.phoneNumbers.filter(phone => phone.trim() !== '');
-      const filteredEmails = newCustomer.emails.filter(email => email.trim() !== '');
+      const response = await fetch('https://finfinphone.com/api-lucky/admin/save_customer.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCustomer),
+      });
 
-      // Combine billing address
-      const fullBillingAddress = [
-        newCustomer.billingAddress,
-        newCustomer.billingSubdistrict,
-        newCustomer.billingDistrict,
-        newCustomer.billingProvince,
-        newCustomer.billingPostcode
-      ].filter(Boolean).join(' ');
+      const result = await response.json();
 
-      const customerData = {
-        company_name: newCustomer.companyName,
-        customer_type: newCustomer.customerType,
-        province: newCustomer.billingProvince,
-        address: fullBillingAddress,
-        tax_id: newCustomer.taxId,
-        contact_name: newCustomer.contactName,
-        phone_numbers: filteredPhoneNumbers,
-        emails: filteredEmails,
-        line_id: newCustomer.lineId,
-        presentation_status: newCustomer.presentationStatus,
-        contact_count: newCustomer.contactCount,
-        last_contact_date: newCustomer.lastContactDate.toISOString(),
-        interested_products: newCustomer.interestedProducts.join(', '),
-        responsible_person: newCustomer.responsiblePerson,
-        customer_status: newCustomer.customerStatus,
-        how_found_us: newCustomer.howFoundUs,
-        other_channel: newCustomer.otherChannel,
-        notes: newCustomer.notes,
-        business_type: newCustomer.customerType === 'เจ้าของงาน' ? 'องค์กร' : 'ตัวแทน'
-      };
-
-      const { data: insertedCustomer, error } = await supabase
-        .from('customers')
-        .insert([customerData])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error adding customer:', error);
+      if (result.status === 'success') {
         toast({
-          title: "เกิดข้อผิดพลาด",
-          description: "ไม่สามารถเพิ่มลูกค้าใหม่ได้",
-          variant: "destructive"
+          title: "เพิ่มลูกค้าใหม่สำเร็จ!",
+          description: result.message || `เพิ่มข้อมูลลูกค้า ${newCustomer.companyName} เรียบร้อยแล้ว`,
         });
-        return;
+
+        setIsAddCustomerOpen(false);
+
+        // Refresh customer list
+        await fetchCustomers();
+
+        // Reset form
+        setNewCustomer({
+          companyName: "",
+          customerType: "เจ้าของงาน",
+          taxId: "",
+          billingProvince: "",
+          billingDistrict: "",
+          billingSubdistrict: "",
+          billingPostcode: "",
+          billingAddress: "",
+          shippingProvince: "",
+          shippingDistrict: "",
+          shippingSubdistrict: "",
+          shippingPostcode: "",
+          shippingAddress: "",
+          contactName: "",
+          phoneNumbers: [""],
+          emails: [""],
+          lineId: "",
+          additionalContacts: [],
+          presentationStatus: "เสนอขาย",
+          contactCount: 1,
+          lastContactDate: new Date(),
+          interestedProducts: [],
+          responsiblePerson: "พนักงานขายปัจจุบัน",
+          customerStatus: "ลูกค้าใหม่",
+          howFoundUs: "Facebook",
+          otherChannel: "",
+          notes: ""
+        });
+        setSameAddress(false);
+      } else {
+        throw new Error(result.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
       }
-
-      // Insert additional contacts if any
-      if (newCustomer.additionalContacts.length > 0) {
-        const validAdditionalContacts = newCustomer.additionalContacts.filter(
-          contact => contact.contactName.trim() !== '' && contact.phoneNumber.trim() !== ''
-        );
-        
-        if (validAdditionalContacts.length > 0) {
-          const contactsData = validAdditionalContacts.map(contact => ({
-            customer_id: insertedCustomer.id,
-            contact_name: contact.contactName,
-            line_id: contact.lineId,
-            phone_number: contact.phoneNumber,
-            email: contact.email
-          }));
-
-          const { error: contactsError } = await supabase
-            .from('customer_contacts')
-            .insert(contactsData);
-
-          if (contactsError) {
-            console.error('Error adding additional contacts:', contactsError);
-          }
-        }
-      }
-
-      toast({
-        title: "เพิ่มลูกค้าใหม่สำเร็จ!",
-        description: `เพิ่มข้อมูลลูกค้า ${newCustomer.companyName} เรียบร้อยแล้ว`,
-      });
-      
-      setIsAddCustomerOpen(false);
-      
-      // Refresh customer list
-      await fetchCustomers();
-      
-      // Reset form
-      setNewCustomer({
-        companyName: "",
-        customerType: "เจ้าของงาน",
-        taxId: "",
-        billingProvince: "",
-        billingDistrict: "",
-        billingSubdistrict: "",
-        billingPostcode: "",
-        billingAddress: "",
-        shippingProvince: "",
-        shippingDistrict: "",
-        shippingSubdistrict: "",
-        shippingPostcode: "",
-        shippingAddress: "",
-        contactName: "",
-        phoneNumbers: [""],
-        emails: [""],
-        lineId: "",
-        additionalContacts: [],
-        presentationStatus: "เสนอขาย",
-        contactCount: 1,
-        lastContactDate: new Date(),
-        interestedProducts: [],
-        responsiblePerson: "พนักงานขายปัจจุบัน",
-        customerStatus: "ลูกค้าใหม่",
-        howFoundUs: "Facebook",
-        otherChannel: "",
-        notes: ""
-      });
-      setSameAddress(false);
     } catch (error) {
       console.error('Error adding customer:', error);
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถเพิ่มลูกค้าใหม่ได้",
+        description: error instanceof Error ? error.message : "ไม่สามารถเพิ่มลูกค้าใหม่ได้",
         variant: "destructive"
       });
     }
@@ -534,7 +579,7 @@ export default function CustomerManagement() {
       });
       return;
     }
-    
+
     console.log("Creating quotation for:", selectedCustomer);
     toast({
       title: "สร้างใบเสนอราคา",
@@ -545,19 +590,19 @@ export default function CustomerManagement() {
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.phone.includes(searchTerm);
-    
+      customer.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone.includes(searchTerm);
+
     const matchesBusinessType = businessTypeFilter === "all" || customer.businessType === businessTypeFilter;
     const matchesStatus = statusFilter === "all" || customer.status === statusFilter;
     const matchesSalesOwner = salesOwnerFilter === "all" || customer.salesOwner === salesOwnerFilter;
     const matchesProduct = productFilter === "all" || customer.interestedProducts.includes(productFilter);
-    
+
     // Date range filtering
     let matchesDate = true;
     if (dateRange?.from || dateRange?.to) {
       const customerDate = new Date(customer.lastContact + "T00:00:00");
-      
+
       if (dateRange.from && dateRange.to) {
         matchesDate = customerDate >= dateRange.from && customerDate <= dateRange.to;
       } else if (dateRange.from) {
@@ -566,7 +611,7 @@ export default function CustomerManagement() {
         matchesDate = customerDate <= dateRange.to;
       }
     }
-    
+
     return matchesSearch && matchesBusinessType && matchesStatus && matchesSalesOwner && matchesProduct && matchesDate;
   });
 
@@ -604,7 +649,7 @@ export default function CustomerManagement() {
     }).length;
 
     // Outstanding quotes (customers with presentation status "เสนอขาย")
-    const outstandingQuotes = customers.filter(customer => 
+    const outstandingQuotes = customers.filter(customer =>
       customer.status === "ลูกค้าใหม่" || customer.businessType === "เสนอขาย"
     ).length;
 
@@ -668,7 +713,7 @@ export default function CustomerManagement() {
       </div>
       <h3 className="text-lg font-semibold mb-2">ยังไม่มีข้อมูลลูกค้า</h3>
       <p className="text-muted-foreground mb-6 max-w-sm">
-        {hasActiveFilters 
+        {hasActiveFilters
           ? "ไม่พบข้อมูลลูกค้าที่ตรงกับเงื่อนไขการค้นหา ลองปรับตัวกรองใหม่"
           : "เริ่มต้นด้วยการเพิ่มลูกค้าใหม่เพื่อจัดการข้อมูลและติดตามการขาย"}
       </p>
@@ -708,7 +753,7 @@ export default function CustomerManagement() {
                   กรอกข้อมูลครบถ้วนสำหรับลูกค้าใหม่ พร้อมข้อมูลที่อยู่และสินค้าที่สนใจ
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-6 py-4">
                 {/* ส่วนที่ 1: ข้อมูลบริษัท/องค์กร */}
                 <div className="space-y-4">
@@ -716,22 +761,22 @@ export default function CustomerManagement() {
                     <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">1</div>
                     <h3 className="text-lg font-semibold">ข้อมูลบริษัท / องค์กร</h3>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-8">
                     <div className="space-y-2">
                       <Label htmlFor="companyName">ชื่อบริษัท <span className="text-red-500">*</span></Label>
                       <Input
                         id="companyName"
                         value={newCustomer.companyName}
-                        onChange={(e) => setNewCustomer({...newCustomer, companyName: e.target.value})}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, companyName: e.target.value })}
                         placeholder="กรอกชื่อบริษัทหรือองค์กร"
                         className="bg-background"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="customerType">ประเภทลูกค้า</Label>
-                      <Select value={newCustomer.customerType} onValueChange={(value) => setNewCustomer({...newCustomer, customerType: value})}>
+                      <Select value={newCustomer.customerType} onValueChange={(value) => setNewCustomer({ ...newCustomer, customerType: value })}>
                         <SelectTrigger className="bg-background">
                           <SelectValue />
                         </SelectTrigger>
@@ -742,13 +787,13 @@ export default function CustomerManagement() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="taxId">เลขประจำตัวผู้เสียภาษี (13 หลัก)</Label>
                       <Input
                         id="taxId"
                         value={newCustomer.taxId}
-                        onChange={(e) => setNewCustomer({...newCustomer, taxId: formatTaxId(e.target.value)})}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, taxId: formatTaxId(e.target.value) })}
                         placeholder="X-XXXX-XXXXX-XX-X"
                         maxLength={13}
                         className="bg-background font-mono"
@@ -766,7 +811,7 @@ export default function CustomerManagement() {
                     <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">2</div>
                     <h3 className="text-lg font-semibold">ที่อยู่ออกใบกำกับภาษี</h3>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ml-8">
                     <div className="space-y-2">
                       <Label>จังหวัด</Label>
@@ -782,12 +827,12 @@ export default function CustomerManagement() {
                             <CommandInput placeholder="ค้นหาจังหวัด..." />
                             <CommandEmpty>ไม่พบจังหวัด</CommandEmpty>
                             <CommandGroup className="max-h-64 overflow-auto">
-                              {thaiProvinces.map((province) => (
+                              {provinces.map((province) => (
                                 <CommandItem
                                   key={province}
                                   value={province}
                                   onSelect={() => {
-                                    setNewCustomer({...newCustomer, billingProvince: province, billingDistrict: "", billingSubdistrict: ""});
+                                    setNewCustomer({ ...newCustomer, billingProvince: province, billingDistrict: "", billingSubdistrict: "" });
                                     setProvinceOpen(false);
                                   }}
                                 >
@@ -813,14 +858,14 @@ export default function CustomerManagement() {
                         <PopoverContent className="w-full p-0 bg-background">
                           <Command className="bg-background">
                             <CommandInput placeholder="ค้นหาอำเภอ/เขต..." />
-                            <CommandEmpty>ไม่พบข้อมูล (Dev: ดึงจาก API)</CommandEmpty>
+                            <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
                             <CommandGroup className="max-h-64 overflow-auto">
-                              {getDistricts(newCustomer.billingProvince).map((district) => (
+                              {billingDistricts.map((district) => (
                                 <CommandItem
                                   key={district}
                                   value={district}
                                   onSelect={() => {
-                                    setNewCustomer({...newCustomer, billingDistrict: district, billingSubdistrict: ""});
+                                    setNewCustomer({ ...newCustomer, billingDistrict: district, billingSubdistrict: "" });
                                     setDistrictOpen(false);
                                   }}
                                 >
@@ -846,14 +891,14 @@ export default function CustomerManagement() {
                         <PopoverContent className="w-full p-0 bg-background">
                           <Command className="bg-background">
                             <CommandInput placeholder="ค้นหาตำบล/แขวง..." />
-                            <CommandEmpty>ไม่พบข้อมูล (Dev: ดึงจาก API)</CommandEmpty>
+                            <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
                             <CommandGroup className="max-h-64 overflow-auto">
-                              {getSubdistricts(newCustomer.billingDistrict).map((subdistrict) => (
+                              {billingSubdistricts.map((subdistrict) => (
                                 <CommandItem
                                   key={subdistrict}
                                   value={subdistrict}
                                   onSelect={() => {
-                                    setNewCustomer({...newCustomer, billingSubdistrict: subdistrict});
+                                    setNewCustomer({ ...newCustomer, billingSubdistrict: subdistrict });
                                     setSubdistrictOpen(false);
                                   }}
                                 >
@@ -871,7 +916,7 @@ export default function CustomerManagement() {
                       <Label>รหัสไปรษณีย์</Label>
                       <Input
                         value={newCustomer.billingPostcode}
-                        onChange={(e) => setNewCustomer({...newCustomer, billingPostcode: e.target.value.replace(/\D/g, '').slice(0, 5)})}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, billingPostcode: e.target.value.replace(/\D/g, '').slice(0, 5) })}
                         placeholder="XXXXX"
                         maxLength={5}
                         className="bg-background"
@@ -882,7 +927,7 @@ export default function CustomerManagement() {
                       <Label>ที่อยู่ (บ้านเลขที่, ถนน, ซอย)</Label>
                       <Textarea
                         value={newCustomer.billingAddress}
-                        onChange={(e) => setNewCustomer({...newCustomer, billingAddress: e.target.value})}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, billingAddress: e.target.value })}
                         placeholder="กรอกรายละเอียดที่อยู่..."
                         rows={2}
                         className="bg-background"
@@ -905,7 +950,7 @@ export default function CustomerManagement() {
                       <Label className="text-sm">ใช้ที่อยู่เดียวกัน</Label>
                     </div>
                   </div>
-                  
+
                   {!sameAddress && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ml-8">
                       <div className="space-y-2">
@@ -922,12 +967,12 @@ export default function CustomerManagement() {
                               <CommandInput placeholder="ค้นหาจังหวัด..." />
                               <CommandEmpty>ไม่พบจังหวัด</CommandEmpty>
                               <CommandGroup className="max-h-64 overflow-auto">
-                                {thaiProvinces.map((province) => (
+                                {provinces.map((province) => (
                                   <CommandItem
                                     key={province}
                                     value={province}
                                     onSelect={() => {
-                                      setNewCustomer({...newCustomer, shippingProvince: province, shippingDistrict: "", shippingSubdistrict: ""});
+                                      setNewCustomer({ ...newCustomer, shippingProvince: province, shippingDistrict: "", shippingSubdistrict: "" });
                                       setShippingProvinceOpen(false);
                                     }}
                                   >
@@ -955,12 +1000,12 @@ export default function CustomerManagement() {
                               <CommandInput placeholder="ค้นหาอำเภอ/เขต..." />
                               <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
                               <CommandGroup className="max-h-64 overflow-auto">
-                                {getDistricts(newCustomer.shippingProvince).map((district) => (
+                                {shippingDistricts.map((district) => (
                                   <CommandItem
                                     key={district}
                                     value={district}
                                     onSelect={() => {
-                                      setNewCustomer({...newCustomer, shippingDistrict: district, shippingSubdistrict: ""});
+                                      setNewCustomer({ ...newCustomer, shippingDistrict: district, shippingSubdistrict: "" });
                                       setShippingDistrictOpen(false);
                                     }}
                                   >
@@ -988,12 +1033,12 @@ export default function CustomerManagement() {
                               <CommandInput placeholder="ค้นหาตำบล/แขวง..." />
                               <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
                               <CommandGroup className="max-h-64 overflow-auto">
-                                {getSubdistricts(newCustomer.shippingDistrict).map((subdistrict) => (
+                                {shippingSubdistricts.map((subdistrict) => (
                                   <CommandItem
                                     key={subdistrict}
                                     value={subdistrict}
                                     onSelect={() => {
-                                      setNewCustomer({...newCustomer, shippingSubdistrict: subdistrict});
+                                      setNewCustomer({ ...newCustomer, shippingSubdistrict: subdistrict });
                                       setShippingSubdistrictOpen(false);
                                     }}
                                   >
@@ -1011,7 +1056,7 @@ export default function CustomerManagement() {
                         <Label>รหัสไปรษณีย์</Label>
                         <Input
                           value={newCustomer.shippingPostcode}
-                          onChange={(e) => setNewCustomer({...newCustomer, shippingPostcode: e.target.value.replace(/\D/g, '').slice(0, 5)})}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, shippingPostcode: e.target.value.replace(/\D/g, '').slice(0, 5) })}
                           placeholder="XXXXX"
                           maxLength={5}
                           className="bg-background"
@@ -1022,7 +1067,7 @@ export default function CustomerManagement() {
                         <Label>ที่อยู่ (บ้านเลขที่, ถนน, ซอย)</Label>
                         <Textarea
                           value={newCustomer.shippingAddress}
-                          onChange={(e) => setNewCustomer({...newCustomer, shippingAddress: e.target.value})}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, shippingAddress: e.target.value })}
                           placeholder="กรอกรายละเอียดที่อยู่..."
                           rows={2}
                           className="bg-background"
@@ -1030,7 +1075,7 @@ export default function CustomerManagement() {
                       </div>
                     </div>
                   )}
-                  
+
                   {sameAddress && (
                     <p className="ml-8 text-sm text-muted-foreground">ใช้ที่อยู่ออกใบกำกับภาษีเป็นที่อยู่จัดส่ง</p>
                   )}
@@ -1044,7 +1089,7 @@ export default function CustomerManagement() {
                     <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">4</div>
                     <h3 className="text-lg font-semibold">ข้อมูลผู้ติดต่อหลัก</h3>
                   </div>
-                  
+
                   <div className="space-y-4 ml-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -1052,18 +1097,18 @@ export default function CustomerManagement() {
                         <Input
                           id="contactName"
                           value={newCustomer.contactName}
-                          onChange={(e) => setNewCustomer({...newCustomer, contactName: e.target.value})}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, contactName: e.target.value })}
                           placeholder="กรอกชื่อ-นามสกุลผู้ติดต่อ"
                           className="bg-background"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="lineId">ID Line</Label>
                         <Input
                           id="lineId"
                           value={newCustomer.lineId}
-                          onChange={(e) => setNewCustomer({...newCustomer, lineId: e.target.value})}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, lineId: e.target.value })}
                           placeholder="Line ID (ไม่บังคับ)"
                           className="bg-background"
                         />
@@ -1083,9 +1128,9 @@ export default function CustomerManagement() {
                             className="bg-background"
                           />
                           {newCustomer.phoneNumbers.length > 1 && (
-                            <Button 
-                              type="button" 
-                              variant="outline" 
+                            <Button
+                              type="button"
+                              variant="outline"
                               size="icon"
                               onClick={() => removePhoneNumber(index)}
                             >
@@ -1094,10 +1139,10 @@ export default function CustomerManagement() {
                           )}
                         </div>
                       ))}
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={addPhoneNumber}
                       >
                         + เพิ่มเบอร์โทรศัพท์
@@ -1117,9 +1162,9 @@ export default function CustomerManagement() {
                             className="bg-background"
                           />
                           {newCustomer.emails.length > 1 && (
-                            <Button 
-                              type="button" 
-                              variant="outline" 
+                            <Button
+                              type="button"
+                              variant="outline"
                               size="icon"
                               onClick={() => removeEmail(index)}
                             >
@@ -1128,10 +1173,10 @@ export default function CustomerManagement() {
                           )}
                         </div>
                       ))}
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={addEmail}
                       >
                         + เพิ่มอีเมล
@@ -1142,30 +1187,30 @@ export default function CustomerManagement() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <Label>ข้อมูลผู้ติดต่อเพิ่มเติม</Label>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={addAdditionalContact}
                         >
                           + เพิ่มผู้ติดต่อ
                         </Button>
                       </div>
-                      
+
                       {newCustomer.additionalContacts.map((contact, index) => (
                         <div key={index} className="border rounded-lg p-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">ผู้ติดต่อที่ {index + 2}</span>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
+                            <Button
+                              type="button"
+                              variant="outline"
                               size="sm"
                               onClick={() => removeAdditionalContact(index)}
                             >
                               ลบ
                             </Button>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="space-y-2">
                               <Label>ชื่อ-นามสกุล <span className="text-red-500">*</span></Label>
@@ -1176,7 +1221,7 @@ export default function CustomerManagement() {
                                 className="bg-background"
                               />
                             </div>
-                            
+
                             <div className="space-y-2">
                               <Label>ID Line</Label>
                               <Input
@@ -1186,7 +1231,7 @@ export default function CustomerManagement() {
                                 className="bg-background"
                               />
                             </div>
-                            
+
                             <div className="space-y-2">
                               <Label>เบอร์โทรศัพท์ <span className="text-red-500">*</span></Label>
                               <Input
@@ -1197,7 +1242,7 @@ export default function CustomerManagement() {
                                 className="bg-background"
                               />
                             </div>
-                            
+
                             <div className="space-y-2">
                               <Label>อีเมล</Label>
                               <Input
@@ -1223,11 +1268,11 @@ export default function CustomerManagement() {
                     <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">5</div>
                     <h3 className="text-lg font-semibold">การนำเสนอ</h3>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-8">
                     <div className="space-y-2">
                       <Label htmlFor="presentationStatus">สถานะการนำเสนอ</Label>
-                      <Select value={newCustomer.presentationStatus} onValueChange={(value) => setNewCustomer({...newCustomer, presentationStatus: value})}>
+                      <Select value={newCustomer.presentationStatus} onValueChange={(value) => setNewCustomer({ ...newCustomer, presentationStatus: value })}>
                         <SelectTrigger className="bg-background">
                           <SelectValue />
                         </SelectTrigger>
@@ -1259,7 +1304,7 @@ export default function CustomerManagement() {
                           <CalendarComponent
                             mode="single"
                             selected={newCustomer.lastContactDate}
-                            onSelect={(date) => date && setNewCustomer({...newCustomer, lastContactDate: date})}
+                            onSelect={(date) => date && setNewCustomer({ ...newCustomer, lastContactDate: date })}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
                           />
@@ -1276,8 +1321,8 @@ export default function CustomerManagement() {
                             variant={newCustomer.interestedProducts.includes(tag) ? "default" : "outline"}
                             className={cn(
                               "cursor-pointer transition-colors",
-                              newCustomer.interestedProducts.includes(tag) 
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                              newCustomer.interestedProducts.includes(tag)
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
                                 : "hover:bg-accent"
                             )}
                             onClick={() => toggleProductTag(tag)}
@@ -1302,11 +1347,11 @@ export default function CustomerManagement() {
                     <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">6</div>
                     <h3 className="text-lg font-semibold">ข้อมูลภายใน</h3>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-8">
                     <div className="space-y-2">
                       <Label htmlFor="responsiblePerson">ผู้รับผิดชอบ</Label>
-                      <Select value={newCustomer.responsiblePerson} onValueChange={(value) => setNewCustomer({...newCustomer, responsiblePerson: value})}>
+                      <Select value={newCustomer.responsiblePerson} onValueChange={(value) => setNewCustomer({ ...newCustomer, responsiblePerson: value })}>
                         <SelectTrigger className="bg-background">
                           <SelectValue />
                         </SelectTrigger>
@@ -1322,7 +1367,7 @@ export default function CustomerManagement() {
 
                     <div className="space-y-2">
                       <Label htmlFor="customerStatus">สถานะลูกค้า</Label>
-                      <Select value={newCustomer.customerStatus} onValueChange={(value) => setNewCustomer({...newCustomer, customerStatus: value})}>
+                      <Select value={newCustomer.customerStatus} onValueChange={(value) => setNewCustomer({ ...newCustomer, customerStatus: value })}>
                         <SelectTrigger className="bg-background">
                           <SelectValue />
                         </SelectTrigger>
@@ -1335,7 +1380,7 @@ export default function CustomerManagement() {
 
                     <div className="space-y-2">
                       <Label htmlFor="howFoundUs">ช่องทางที่รู้จักเรา</Label>
-                      <Select value={newCustomer.howFoundUs} onValueChange={(value) => setNewCustomer({...newCustomer, howFoundUs: value})}>
+                      <Select value={newCustomer.howFoundUs} onValueChange={(value) => setNewCustomer({ ...newCustomer, howFoundUs: value })}>
                         <SelectTrigger className="bg-background">
                           <SelectValue />
                         </SelectTrigger>
@@ -1354,7 +1399,7 @@ export default function CustomerManagement() {
                         <Input
                           id="otherChannel"
                           value={newCustomer.otherChannel}
-                          onChange={(e) => setNewCustomer({...newCustomer, otherChannel: e.target.value})}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, otherChannel: e.target.value })}
                           placeholder="ระบุช่องทางอื่นๆ"
                           className="bg-background"
                         />
@@ -1366,7 +1411,7 @@ export default function CustomerManagement() {
                       <Textarea
                         id="notes"
                         value={newCustomer.notes}
-                        onChange={(e) => setNewCustomer({...newCustomer, notes: e.target.value})}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, notes: e.target.value })}
                         placeholder="บันทึกข้อมูลเพิ่มเติมที่สำคัญ..."
                         rows={3}
                         className="bg-background"
@@ -1394,7 +1439,7 @@ export default function CustomerManagement() {
           <h2 className="text-xl font-semibold text-foreground">สรุปภาพรวม</h2>
           <p className="text-muted-foreground text-sm">ตัวเลขสำคัญของลูกค้าในความดูแล</p>
         </div>
-        
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {[1, 2, 3].map((i) => (
@@ -1418,7 +1463,7 @@ export default function CustomerManagement() {
               trend="neutral"
               className="bg-card hover:bg-accent/5"
             />
-            
+
             <StatsCard
               title="ใบเสนอราคาที่ยังไม่ปิดการขาย"
               value={kpis.outstandingQuotes}
@@ -1426,7 +1471,7 @@ export default function CustomerManagement() {
               trend="neutral"
               className="bg-card hover:bg-accent/5"
             />
-            
+
             <StatsCard
               title="ลูกค้าไม่ได้ติดต่อเกิน 30 วัน"
               value={kpis.inactiveCustomers}
@@ -1466,7 +1511,7 @@ export default function CustomerManagement() {
                   <Filter className="w-4 h-4" />
                   <span>ตัวกรองขั้นสูง:</span>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-3">
                   <Select value={salesOwnerFilter} onValueChange={setSalesOwnerFilter}>
                     <SelectTrigger className="w-40">
@@ -1555,8 +1600,8 @@ export default function CustomerManagement() {
                   </Popover>
 
                   {hasActiveFilters && (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={clearAllFilters}
                       className="text-muted-foreground hover:text-foreground"
@@ -1569,7 +1614,7 @@ export default function CustomerManagement() {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent className="flex-1 p-0 overflow-hidden">
             <div className="h-full overflow-auto">
               <Table>
@@ -1594,11 +1639,10 @@ export default function CustomerManagement() {
                     </TableRow>
                   ) : (
                     filteredCustomers.map((customer) => (
-                      <TableRow 
+                      <TableRow
                         key={customer.id}
-                        className={`cursor-pointer transition-colors hover:bg-accent/50 ${
-                          selectedCustomer?.id === customer.id ? 'bg-accent' : ''
-                        }`}
+                        className={`cursor-pointer transition-colors hover:bg-accent/50 ${selectedCustomer?.id === customer.id ? 'bg-accent' : ''
+                          }`}
                         onClick={() => navigate(`/sales/customers/${customer.id}`)}
                       >
                         <TableCell className="font-medium">

@@ -30,7 +30,7 @@ import { EstimationDetailDialog } from "./EstimationDetailDialog";
 const createOrderSchema = z.object({
   // Section 1: Sales Employee
   responsiblePerson: z.string().min(1, "กรุณาระบุพนักงานที่รับผิดชอบ"),
-  
+
   // Section 2: Customer Information
   customerSearch: z.string().optional(),
   customerName: z.string().min(1, "กรุณาระบุชื่อลูกค้า"),
@@ -41,7 +41,7 @@ const createOrderSchema = z.object({
   taxPayerName: z.string().optional(),
   taxId: z.string().optional(),
   taxAddress: z.string().optional(),
-  
+
   // Section 3: Order Information
   jobId: z.string().optional(),
   quotationNumber: z.string().optional(),
@@ -53,7 +53,7 @@ const createOrderSchema = z.object({
   budget: z.string().optional(),
   productType: z.string().optional(),
   material: z.string().optional(),
-  
+
   // Section 4: Job Details (dynamic based on product type)
   jobDetails: z.object({
     customerReferenceImages: z.any().optional(),
@@ -78,7 +78,7 @@ const createOrderSchema = z.object({
     attachedFiles: z.any().optional(),
     customType: z.string().optional(),
   }).optional(),
-  
+
   // Section 5: Delivery Information
   deliveryType: z.string().min(1, "กรุณาเลือกรูปแบบการรับสินค้า"),
   deliveryInfo: z.object({
@@ -127,16 +127,16 @@ export default function CreateOrderForm({ onSubmit, onCancel, initialData, estim
   const [showCustomSize, setShowCustomSize] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");
   const [shapeFiles, setShapeFiles] = useState<File[]>([]);
-  
+
   // ReadyMedal specific states
   const [selectedProductModel, setSelectedProductModel] = useState<string>("");
   const [selectedPlatingColor, setSelectedPlatingColor] = useState<string>("");
-  const [readyMedalColorEntries, setReadyMedalColorEntries] = useState<{color: string; quantity: string}[]>([]);
-  const [newColorEntry, setNewColorEntry] = useState<{color: string; quantity: string}>({color: "", quantity: ""});
+  const [readyMedalColorEntries, setReadyMedalColorEntries] = useState<{ color: string; quantity: string }[]>([]);
+  const [newColorEntry, setNewColorEntry] = useState<{ color: string; quantity: string }>({ color: "", quantity: "" });
   const [wantsSticker, setWantsSticker] = useState<string>("");
   const [stickerDesignDetails, setStickerDesignDetails] = useState<string>("");
   const [stickerFiles, setStickerFiles] = useState<File[]>([]);
-  
+
   // Add color entry
   const addColorEntry = () => {
     if (newColorEntry.color && newColorEntry.quantity) {
@@ -156,17 +156,17 @@ export default function CreateOrderForm({ onSubmit, onCancel, initialData, estim
         }
         return [...prev, newColorEntry];
       });
-      setNewColorEntry({color: "", quantity: ""});
+      setNewColorEntry({ color: "", quantity: "" });
     }
   };
-  
+
   // Remove color entry
   const removeColorEntry = (index: number) => {
     setReadyMedalColorEntries(prev => prev.filter((_, i) => i !== index));
   };
   // Trophy sizes state
   const [trophySizes, setTrophySizes] = useState<{ size: string; height: number; opening: number; price: number; quantity: string }[]>([]);
-  
+
   // Shirt form state
   const [shirtCollar, setShirtCollar] = useState<string>("");
   const [shirtSleeve, setShirtSleeve] = useState<string>("");
@@ -183,11 +183,11 @@ export default function CreateOrderForm({ onSubmit, onCancel, initialData, estim
   ]);
   const [showCustomShirtSize, setShowCustomShirtSize] = useState(false);
   const [customShirtSize, setCustomShirtSize] = useState({ size: "", chest: "", length: "", shoulder: "", sleeve: "", quantity: "" });
-  
+
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedPriceEstimationId, setSelectedPriceEstimationId] = useState<number | null>(null);
-const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
+  const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
   const [viewingEstimation, setViewingEstimation] = useState<{
     id: number;
     date: string;
@@ -202,7 +202,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
     jobDescription: string;
     material?: string;
   } | null>(null);
-  
+
   // Selected estimations for quotation-style product list (multiple selection)
   const [selectedEstimations, setSelectedEstimations] = useState<{
     id: number;
@@ -461,7 +461,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
   const findCategoryForProduct = (productLabel: string): string | null => {
     const productValue = productLabelToValue[productLabel];
     if (!productValue) return null;
-    
+
     for (const [categoryId, products] of Object.entries(productsByCategory)) {
       if (products.some(p => p.value === productValue)) {
         return categoryId;
@@ -493,19 +493,19 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
   // Select price estimation and auto-fill form (legacy single-select, kept for compatibility)
   const selectPriceEstimation = (estimation: typeof priceEstimations[0]) => {
     setSelectedPriceEstimationId(estimation.id);
-    
+
     // Auto-fill customer info
     form.setValue("customerName", estimation.customerName);
     form.setValue("customerLine", estimation.lineName);
     form.setValue("customerPhone", estimation.customerPhone);
     form.setValue("customerEmail", estimation.customerEmail);
-    
+
     // Auto-fill budget/price
     form.setValue("budget", estimation.price.toString());
-    
+
     // Auto-fill job details quantity
     form.setValue("jobDetails.quantity", estimation.quantity.toString());
-    
+
     // Auto-fill product type and category
     const productValue = productLabelToValue[estimation.productType];
     if (productValue) {
@@ -516,7 +516,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       form.setValue("productType", productValue);
       form.setValue("material", "");
     }
-    
+
     toast({
       title: "เลือกรายการสำเร็จ",
       description: `นำข้อมูลจากรายการประเมินราคา #${estimation.id} มาใช้แล้ว`,
@@ -585,7 +585,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
     };
     return labels[type] || type;
   };
-  
+
   const form = useForm<CreateOrderFormData>({
     resolver: zodResolver(createOrderSchema),
     defaultValues: initialData || {
@@ -607,6 +607,103 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       },
     },
   });
+
+  const handleFormSubmit = async (data: CreateOrderFormData) => {
+    try {
+      // Prepare FormData for file uploads
+      const formData = new FormData();
+
+      // Append basic fields
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === 'jobDetails' || key === 'deliveryInfo') {
+          // Handle nested objects later or flatten them
+          // For now, let's append them as JSON strings if the API expects that, 
+          // or flatten them. Let's assume flattening for simplicity or JSON for complex structures.
+          // Better approach: Append individual fields from nested objects
+        } else if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      });
+
+      // Append nested jobDetails fields
+      if (data.jobDetails) {
+        Object.entries(data.jobDetails).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach(item => formData.append(`jobDetails[${key}][]`, item));
+          } else if (value instanceof FileList) {
+            // Handle FileList
+            Array.from(value).forEach((file, index) => {
+              formData.append(`jobDetails[${key}][${index}]`, file);
+            });
+          } else if (value !== undefined && value !== null) {
+            formData.append(`jobDetails[${key}]`, String(value));
+          }
+        });
+      }
+
+      // Append nested deliveryInfo fields
+      if (data.deliveryInfo) {
+        Object.entries(data.deliveryInfo).forEach(([key, value]) => {
+          if (value instanceof Date) {
+            formData.append(`deliveryInfo[${key}]`, value.toISOString());
+          } else if (value !== undefined && value !== null) {
+            formData.append(`deliveryInfo[${key}]`, String(value));
+          }
+        });
+      }
+
+      // Append custom files (shapeFiles, stickerFiles)
+      shapeFiles.forEach((file, index) => {
+        formData.append(`shapeFiles[${index}]`, file);
+      });
+
+      stickerFiles.forEach((file, index) => {
+        formData.append(`stickerFiles[${index}]`, file);
+      });
+
+      // Append product items (for multi-item orders)
+      if (productItems.length > 0) {
+        formData.append('productItems', JSON.stringify(productItems));
+      }
+
+      // Append payment items
+      if (paymentItems.length > 0) {
+        formData.append('paymentItems', JSON.stringify(paymentItems));
+        // Append slip files
+        paymentItems.forEach((item, index) => {
+          if (item.slipFile) {
+            formData.append(`paymentSlips[${index}]`, item.slipFile);
+          }
+        });
+      }
+
+      const response = await fetch('https://finfinphone.com/api-lucky/admin/save_order.php', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        toast({
+          title: "สำเร็จ",
+          description: "บันทึกคำสั่งซื้อเรียบร้อยแล้ว",
+        });
+        onSubmit(data); // Call parent onSubmit
+      } else {
+        throw new Error(result.message || "เกิดข้อผิดพลาดในการบันทึก");
+      }
+    } catch (error) {
+      console.error('Error saving order:', error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถบันทึกคำสั่งซื้อได้",
+        variant: "destructive"
+      });
+    }
+  };
 
   const watchedProductType = form.watch("productType");
   const watchedMaterial = form.watch("material");
@@ -640,12 +737,12 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       const { data, error } = await supabase
         .from('customers')
         .select('*');
-      
+
       if (data && !error) {
         setCustomers(data);
       }
     };
-    
+
     loadCustomers();
   }, []);
 
@@ -687,7 +784,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
 
       // Set LINE name as customer line
       form.setValue("customerLine", estimationData.lineName);
-      
+
       // Set budget
       if (estimationData.price) {
         form.setValue("budget", estimationData.price.toString());
@@ -706,7 +803,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
   // Search customers
   useEffect(() => {
     if (watchedCustomerSearch && watchedCustomerSearch.length > 2) {
-      const filtered = customers.filter(customer => 
+      const filtered = customers.filter(customer =>
         customer.contact_name?.toLowerCase().includes(watchedCustomerSearch.toLowerCase()) ||
         customer.company_name?.toLowerCase().includes(watchedCustomerSearch.toLowerCase()) ||
         customer.line_id?.toLowerCase().includes(watchedCustomerSearch.toLowerCase()) ||
@@ -810,7 +907,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         return (
           <div className="space-y-4">
             <h4 className="font-semibold text-lg">รายละเอียดเหรียญสั่งผลิต</h4>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -888,12 +985,12 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>ขนาด</FormLabel>
-                    <Select 
+                    <Select
                       onValueChange={(value) => {
                         field.onChange(value);
                         setSelectedSize(value);
                         setShowCustomSize(value === "other");
-                      }} 
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -910,8 +1007,8 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                       </SelectContent>
                     </Select>
                     {showCustomSize && (
-                      <Input 
-                        placeholder="ระบุขนาด" 
+                      <Input
+                        placeholder="ระบุขนาด"
                         value={customSize}
                         onChange={(e) => {
                           setCustomSize(e.target.value);
@@ -1133,7 +1230,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         return (
           <div className="space-y-4">
             <h4 className="font-semibold text-lg">รายละเอียดถ้วยรางวัล</h4>
-            
+
             <FormField
               control={form.control}
               name="jobDetails.model"
@@ -1241,7 +1338,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         return (
           <div className="space-y-4">
             <h4 className="font-semibold text-lg">รายละเอียดโล่</h4>
-            
+
             <FormField
               control={form.control}
               name="jobDetails.model"
@@ -1351,7 +1448,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         return (
           <div className="space-y-4">
             <h4 className="font-semibold text-lg">รายละเอียดป้ายบิบ</h4>
-            
+
             <FormField
               control={form.control}
               name="jobDetails.quantity"
@@ -1397,7 +1494,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         return (
           <div className="space-y-4">
             <h4 className="font-semibold text-lg">รายละเอียด{watchedProductType}</h4>
-            
+
             {watchedProductType === "อื่นๆ" && (
               <FormField
                 control={form.control}
@@ -1413,7 +1510,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                 )}
               />
             )}
-            
+
             <FormField
               control={form.control}
               name="jobDetails.quantity"
@@ -1460,13 +1557,13 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       // Check if this is a zinc model that has plating color
       const isZincModel = ["โลหะซิงค์มัลติฟังค์ชั่น", "โลหะซิงค์สำเร็จรูปหมุนได้"].includes(watchedMaterial || "");
       const platingLabel = selectedPlatingColor === "สีเงา" ? "เงา" : (selectedPlatingColor === "สีรมดำ" ? "รมดำ" : "");
-      
+
       const newProducts = readyMedalColorEntries.map((colorEntry, index) => {
         // Build display name with plating color for zinc models
         const displayName = isZincModel && platingLabel
           ? `เหรียญสำเร็จรูป ${watchedMaterial} ${platingLabel} ${colorEntry.color}`
           : `เหรียญสำเร็จรูป ${watchedMaterial} ${colorEntry.color}`;
-        
+
         return {
           id: Date.now() + index,
           productType: watchedProductType,
@@ -1481,9 +1578,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
           details: form.getValues("jobDetails"),
         };
       });
-      
+
       setSavedProducts([...savedProducts, ...newProducts]);
-      
+
       // Reset all fields
       form.setValue("productType", "");
       form.setValue("material", "");
@@ -1491,12 +1588,12 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       setSelectedProductModel("");
       setSelectedPlatingColor("");
       setReadyMedalColorEntries([]);
-      setNewColorEntry({color: "", quantity: ""});
+      setNewColorEntry({ color: "", quantity: "" });
       setWantsSticker("");
       setStickerDesignDetails("");
       return;
     }
-    
+
     // Special handling for Trophy - add separate line items for each size
     if (watchedProductType === "Trophy" && trophySizes.length > 0) {
       const modelName = (() => {
@@ -1509,7 +1606,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         ];
         return models.find((m) => m.id === form.getValues("jobDetails.model"))?.name || "ถ้วยรางวัล";
       })();
-      
+
       const newProducts = trophySizes.map((sizeEntry, index) => ({
         id: Date.now() + index,
         productType: watchedProductType,
@@ -1522,9 +1619,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         unitPrice: sizeEntry.price,
         details: form.getValues("jobDetails"),
       }));
-      
+
       setSavedProducts([...savedProducts, ...newProducts]);
-      
+
       // Reset all fields
       form.setValue("productType", "");
       form.setValue("material", "");
@@ -1532,20 +1629,20 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       setTrophySizes([]);
       return;
     }
-    
+
     // Special handling for Shirt - add separate line items for each size with quantity
     if (watchedProductType === "Shirt") {
       const collarLabel = shirtCollar === "polo" ? "คอปก" : "คอกลม";
       const sleeveLabel = shirtSleeve === "sleeveless" ? "แขนกุด" : (shirtSleeve === "short" ? "แขนสั้น" : "แขนยาว");
-      
+
       // Collect sizes with quantities
       const sizesWithQuantity = shirtSizes.filter(s => parseInt(s.quantity) > 0);
-      
+
       // Include custom size if has quantity
       if (showCustomShirtSize && customShirtSize.size && parseInt(customShirtSize.quantity) > 0) {
         sizesWithQuantity.push(customShirtSize);
       }
-      
+
       if (sizesWithQuantity.length === 0) {
         toast({
           title: "กรุณาระบุจำนวน",
@@ -1554,7 +1651,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
         });
         return;
       }
-      
+
       const newProducts = sizesWithQuantity.map((sizeEntry, index) => ({
         id: Date.now() + index,
         productType: watchedProductType,
@@ -1573,9 +1670,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
           sleeveLength: sizeEntry.sleeve,
         },
       }));
-      
+
       setSavedProducts([...savedProducts, ...newProducts]);
-      
+
       // Reset all fields
       form.setValue("productType", "");
       form.setValue("material", "");
@@ -1597,7 +1694,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       setCustomShirtSize({ size: "", chest: "", length: "", shoulder: "", sleeve: "", quantity: "" });
       return;
     }
-    
+
     // Default behavior for other products
     const currentProduct = {
       id: Date.now(),
@@ -1606,7 +1703,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
       details: form.getValues("jobDetails"),
     };
     setSavedProducts([...savedProducts, currentProduct]);
-    
+
     // Reset product type and material to allow adding new product
     form.setValue("productType", "");
     form.setValue("material", "");
@@ -1682,7 +1779,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit, handleInvalid)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
         {/* Section 1: Sales Employee */}
         <Card>
           <CardHeader>
@@ -1813,8 +1910,8 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="requireTaxInvoice" 
+              <Checkbox
+                id="requireTaxInvoice"
                 checked={showTaxFields}
                 onCheckedChange={(checked) => setShowTaxFields(checked === true)}
               />
@@ -1878,9 +1975,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>การชำระเงิน</span>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 size="sm"
                 onClick={() => setShowPaymentForm(true)}
               >
@@ -1896,8 +1993,8 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="text-sm font-medium mb-2 block">ประเภทการชำระเงิน</label>
-                    <Select 
-                      value={newPayment.type} 
+                    <Select
+                      value={newPayment.type}
                       onValueChange={(value) => setNewPayment({ ...newPayment, type: value, additionalDetails: '' })}
                     >
                       <SelectTrigger className="bg-background">
@@ -1920,15 +2017,15 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                         <span className="text-sm">
                           {newPayment.slipFile ? newPayment.slipFile.name : 'อัพโหลดสลิป (รูปภาพ/PDF)'}
                         </span>
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           accept="image/*,.pdf"
                           className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
                               setNewPayment({
-                                ...newPayment, 
+                                ...newPayment,
                                 slipFile: file,
                                 slipPreview: URL.createObjectURL(file)
                               });
@@ -1944,9 +2041,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                 {newPayment.type === 'additional' && (
                   <div className="mb-4">
                     <label className="text-sm font-medium mb-2 block">รายละเอียดการชำระเพิ่มเติม</label>
-                    <Textarea 
+                    <Textarea
                       value={newPayment.additionalDetails}
-                      onChange={(e) => setNewPayment({...newPayment, additionalDetails: e.target.value})}
+                      onChange={(e) => setNewPayment({ ...newPayment, additionalDetails: e.target.value })}
                       placeholder="เช่น ชำระเพิ่มจากงานแก้ไข / ค่าจัดส่ง / ค่าเพิ่มอื่น ๆ"
                       rows={2}
                     />
@@ -1956,10 +2053,10 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="text-sm font-medium mb-2 block">จำนวนเงิน (บาท)</label>
-                    <Input 
+                    <Input
                       type="number"
                       value={newPayment.amount}
-                      onChange={(e) => setNewPayment({...newPayment, amount: e.target.value})}
+                      onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
                       placeholder="0.00"
                     />
                   </div>
@@ -1987,7 +2084,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                         <Calendar
                           mode="single"
                           selected={newPayment.transferDate}
-                          onSelect={(date) => setNewPayment({...newPayment, transferDate: date})}
+                          onSelect={(date) => setNewPayment({ ...newPayment, transferDate: date })}
                           initialFocus
                           className="pointer-events-auto"
                         />
@@ -2001,9 +2098,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                 </p>
 
                 <div className="flex gap-2 justify-end">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     size="sm"
                     onClick={() => {
                       setShowPaymentForm(false);
@@ -2012,8 +2109,8 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                   >
                     ยกเลิก
                   </Button>
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     size="sm"
                     onClick={() => {
                       try {
@@ -2174,8 +2271,8 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
             <div>
               <Label className="text-sm font-medium">แนบไฟล์ใบเสนอราคา</Label>
               <div className="mt-2 flex items-center gap-2">
-                <Input 
-                  type="file" 
+                <Input
+                  type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   className="flex-1"
                 />
@@ -2467,10 +2564,10 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                   {(() => {
                     const categoryProducts = productsByCategory[selectedCategory] || [];
                     const categoryProductLabels = categoryProducts.map(p => productValueToLabel[p.value] || p.label);
-                    const hasEstimationsForCategory = getFilteredEstimations().some(est => 
+                    const hasEstimationsForCategory = getFilteredEstimations().some(est =>
                       categoryProductLabels.includes(est.productType)
                     );
-                    
+
                     if (!hasEstimationsForCategory) {
                       return (
                         <div className="text-center py-6 border border-dashed border-border rounded-lg bg-muted/20">
@@ -2490,7 +2587,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                         </div>
                       );
                     }
-                    
+
                     return null;
                   })()}
                 </div>
@@ -2524,13 +2621,13 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                       </Button>
                     ))}
                   </div>
-                  
+
                   {watchedProductType && (
                     <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50 text-sm">
                       <span className="text-muted-foreground">Flow:</span>
                       <span className="font-medium">
-                        {getProductFlow(watchedProductType) === "catalog" 
-                          ? "📦 Catalog / สต็อก" 
+                        {getProductFlow(watchedProductType) === "catalog"
+                          ? "📦 Catalog / สต็อก"
                           : "🔧 ตีราคา / แนบไฟล์"}
                       </span>
                     </div>
@@ -2550,15 +2647,15 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>รุ่นสินค้า</FormLabel>
-                            <Select 
+                            <Select
                               onValueChange={(value) => {
                                 field.onChange(value);
                                 setSelectedProductModel(value);
                                 // Reset plating and color entries when model changes
                                 setSelectedPlatingColor("");
                                 setReadyMedalColorEntries([]);
-                                setNewColorEntry({color: "", quantity: ""});
-                              }} 
+                                setNewColorEntry({ color: "", quantity: "" });
+                              }}
                               defaultValue={field.value}
                             >
                               <FormControl>
@@ -2583,12 +2680,12 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                       {selectedProductModel && ["โลหะซิงค์มัลติฟังค์ชั่น", "โลหะซิงค์สำเร็จรูปหมุนได้"].includes(selectedProductModel) && (
                         <div>
                           <Label className="text-sm font-medium">สีชุบ</Label>
-                          <Select 
-                            value={selectedPlatingColor} 
+                          <Select
+                            value={selectedPlatingColor}
                             onValueChange={(value) => {
                               setSelectedPlatingColor(value);
                               setReadyMedalColorEntries([]); // Reset color entries when plating changes
-                              setNewColorEntry({color: "", quantity: ""});
+                              setNewColorEntry({ color: "", quantity: "" });
                             }}
                           >
                             <SelectTrigger className="bg-background mt-2">
@@ -2637,9 +2734,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                               <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                                 <div>
                                   <Label className="text-sm font-medium">สี</Label>
-                                  <Select 
-                                    value={newColorEntry.color} 
-                                    onValueChange={(value) => setNewColorEntry(prev => ({...prev, color: value}))}
+                                  <Select
+                                    value={newColorEntry.color}
+                                    onValueChange={(value) => setNewColorEntry(prev => ({ ...prev, color: value }))}
                                   >
                                     <SelectTrigger className="bg-background mt-2">
                                       <SelectValue placeholder="เลือกสี" />
@@ -2653,10 +2750,10 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                 </div>
                                 <div>
                                   <Label className="text-sm font-medium">จำนวน</Label>
-                                  <Input 
+                                  <Input
                                     type="number"
                                     value={newColorEntry.quantity}
-                                    onChange={(e) => setNewColorEntry(prev => ({...prev, quantity: e.target.value}))}
+                                    onChange={(e) => setNewColorEntry(prev => ({ ...prev, quantity: e.target.value }))}
                                     placeholder="ระบุจำนวน"
                                     className="mt-2"
                                   />
@@ -2682,7 +2779,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                   className="mt-2 min-h-[80px]"
                                 />
                               </div>
-                              
+
                               {/* File attachment for job details */}
                               <div>
                                 <Label className="text-sm font-medium">แนบไฟล์</Label>
@@ -2728,14 +2825,14 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Sticker option */}
                               {readyMedalColorEntries.length > 0 && (
                                 <div className="space-y-4">
                                   <div>
                                     <Label className="text-sm font-medium">สติ๊กเกอร์</Label>
-                                    <RadioGroup 
-                                      value={wantsSticker} 
+                                    <RadioGroup
+                                      value={wantsSticker}
                                       onValueChange={setWantsSticker}
                                       className="flex gap-4 mt-2"
                                     >
@@ -2845,9 +2942,9 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                               <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                                 <div>
                                   <Label className="text-sm font-medium">สี</Label>
-                                  <Select 
-                                    value={newColorEntry.color} 
-                                    onValueChange={(value) => setNewColorEntry(prev => ({...prev, color: value}))}
+                                  <Select
+                                    value={newColorEntry.color}
+                                    onValueChange={(value) => setNewColorEntry(prev => ({ ...prev, color: value }))}
                                   >
                                     <SelectTrigger className="bg-background mt-2">
                                       <SelectValue placeholder="เลือกสี" />
@@ -2861,10 +2958,10 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                 </div>
                                 <div>
                                   <Label className="text-sm font-medium">จำนวน</Label>
-                                  <Input 
+                                  <Input
                                     type="number"
                                     value={newColorEntry.quantity}
-                                    onChange={(e) => setNewColorEntry(prev => ({...prev, quantity: e.target.value}))}
+                                    onChange={(e) => setNewColorEntry(prev => ({ ...prev, quantity: e.target.value }))}
                                     placeholder="ระบุจำนวน"
                                     className="mt-2"
                                   />
@@ -2890,7 +2987,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                   className="mt-2 min-h-[80px]"
                                 />
                               </div>
-                              
+
                               {/* File attachment for job details */}
                               <div>
                                 <Label className="text-sm font-medium">แนบไฟล์</Label>
@@ -2936,14 +3033,14 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Sticker option */}
                               {readyMedalColorEntries.length > 0 && (
                                 <div className="space-y-4">
                                   <div>
                                     <Label className="text-sm font-medium">สติ๊กเกอร์</Label>
-                                    <RadioGroup 
-                                      value={wantsSticker} 
+                                    <RadioGroup
+                                      value={wantsSticker}
                                       onValueChange={setWantsSticker}
                                       className="flex gap-4 mt-2"
                                     >
@@ -3050,12 +3147,12 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                           </FormItem>
                         )}
                       />
-                      
+
                       {/* รายละเอียดถ้วยรางวัล - in same box as product details */}
                       {watchedMaterial && (
                         <div className="space-y-4 pt-4 border-t">
                           <h4 className="font-semibold text-lg">รายละเอียดถ้วยรางวัล</h4>
-                          
+
                           {/* รุ่นโมเดล - Searchable Dropdown */}
                           <FormField
                             control={form.control}
@@ -3076,15 +3173,15 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                       >
                                         {field.value
                                           ? (() => {
-                                              const models = [
-                                                { id: "B112G", name: "ถ้วยโลหะอิตาลี รุ่น B112 G" },
-                                                { id: "B113G", name: "ถ้วยโลหะอิตาลี รุ่น B113 G" },
-                                                { id: "B114G", name: "ถ้วยโลหะอิตาลี รุ่น B114 G" },
-                                                { id: "C201S", name: "ถ้วยคริสตัล รุ่น C201 S" },
-                                                { id: "C202S", name: "ถ้วยคริสตัล รุ่น C202 S" },
-                                              ];
-                                              return models.find((m) => m.id === field.value)?.name || field.value;
-                                            })()
+                                            const models = [
+                                              { id: "B112G", name: "ถ้วยโลหะอิตาลี รุ่น B112 G" },
+                                              { id: "B113G", name: "ถ้วยโลหะอิตาลี รุ่น B113 G" },
+                                              { id: "B114G", name: "ถ้วยโลหะอิตาลี รุ่น B114 G" },
+                                              { id: "C201S", name: "ถ้วยคริสตัล รุ่น C201 S" },
+                                              { id: "C202S", name: "ถ้วยคริสตัล รุ่น C202 S" },
+                                            ];
+                                            return models.find((m) => m.id === field.value)?.name || field.value;
+                                          })()
                                           : "เลือกรุ่นโมเดล"}
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                       </Button>
@@ -3138,14 +3235,14 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                 {/* Product Image - match table height */}
                                 <div className="flex-shrink-0 flex">
                                   <div className="border rounded-lg p-3 bg-muted/30 flex items-center justify-center">
-                                    <img 
-                                      src={trophyB112GImage} 
-                                      alt="ถ้วยโลหะอิตาลี" 
+                                    <img
+                                      src={trophyB112GImage}
+                                      alt="ถ้วยโลหะอิตาลี"
                                       className="h-full w-auto max-h-48 object-contain"
                                     />
                                   </div>
                                 </div>
-                                
+
                                 {/* Size Table */}
                                 <div className="flex-1 border rounded-lg overflow-hidden">
                                   <table className="w-full text-sm">
@@ -3166,7 +3263,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                       ].map((sizeOption) => {
                                         const currentSize = trophySizes.find((s) => s.size === sizeOption.size);
                                         const quantity = currentSize?.quantity || "";
-                                        
+
                                         return (
                                           <tr key={sizeOption.size} className="border-t border-border">
                                             <td className="px-3 py-3 font-medium">{sizeOption.size}</td>
@@ -3183,7 +3280,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                                 onChange={(e) => {
                                                   const newQuantity = e.target.value;
                                                   const otherSizes = trophySizes.filter((s) => s.size !== sizeOption.size);
-                                                  
+
                                                   if (newQuantity && parseInt(newQuantity) > 0) {
                                                     setTrophySizes([
                                                       ...otherSizes,
@@ -3204,7 +3301,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                               </div>
                               {trophySizes.length > 0 && (
                                 <div className="text-sm text-muted-foreground">
-                                  รวม: {trophySizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0)} ชิ้น | 
+                                  รวม: {trophySizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0)} ชิ้น |
                                   มูลค่า: {trophySizes.reduce((sum, s) => sum + ((parseInt(s.quantity) || 0) * s.price), 0).toLocaleString()} บาท
                                 </div>
                               )}
@@ -3216,7 +3313,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                             <Label className="text-sm font-medium">ป้ายจารึก</Label>
                             <div className="flex items-center gap-6">
                               <div className="flex items-center space-x-2">
-                                <Checkbox 
+                                <Checkbox
                                   id="engraving-accept"
                                   checked={form.watch("jobDetails.engraving") === "accept"}
                                   onCheckedChange={(checked) => {
@@ -3226,7 +3323,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                 <label htmlFor="engraving-accept" className="text-sm cursor-pointer">รับ</label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <Checkbox 
+                                <Checkbox
                                   id="engraving-decline"
                                   checked={form.watch("jobDetails.engraving") === "decline"}
                                   onCheckedChange={(checked) => {
@@ -3280,7 +3377,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                             <Label className="text-sm font-medium">โบว์</Label>
                             <div className="flex items-center gap-6">
                               <div className="flex items-center space-x-2">
-                                <Checkbox 
+                                <Checkbox
                                   id="bow-accept"
                                   checked={form.watch("jobDetails.customType") === "bow-accept"}
                                   onCheckedChange={(checked) => {
@@ -3290,7 +3387,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                 <label htmlFor="bow-accept" className="text-sm cursor-pointer">รับ</label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <Checkbox 
+                                <Checkbox
                                   id="bow-decline"
                                   checked={form.watch("jobDetails.customType") === "bow-decline" || !form.watch("jobDetails.customType")}
                                   onCheckedChange={(checked) => {
@@ -3385,12 +3482,12 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                           </FormItem>
                         )}
                       />
-                      
+
                       {/* รายละเอียดเสื้อ - in same box as product details */}
                       {watchedMaterial && (
                         <div className="space-y-4 pt-4 border-t">
                           <h4 className="font-semibold text-lg">รายละเอียดเสื้อ</h4>
-                          
+
                           {/* Collar selection */}
                           <div>
                             <Label className="text-sm font-medium">คอเสื้อ</Label>
@@ -3518,7 +3615,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                                   </TableBody>
                                 </Table>
                               </div>
-                              
+
                               {/* Add custom size button */}
                               {!showCustomShirtSize && (
                                 <Button
@@ -3603,7 +3700,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
           </CardContent>
         </Card>
 
-{/* Price Estimation List Panel - Based on Customer (after Section 4) */}
+        {/* Price Estimation List Panel - Based on Customer (after Section 4) */}
         {(watchedCustomerName || watchedCustomerLine) && (
           <Card>
             <CardHeader>
@@ -3639,7 +3736,7 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                       {getFilteredEstimations().map((estimation) => {
                         const isSelected = selectedEstimations.some(e => e.id === estimation.id);
                         return (
-                          <TableRow 
+                          <TableRow
                             key={estimation.id}
                             className={cn(
                               "cursor-pointer hover:bg-muted/50 transition-colors",
@@ -3792,11 +3889,11 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
                       // Use displayName if available (for ReadyMedal with colors or Trophy), otherwise fallback to label
                       const productLabel = product.displayName || productValueToLabel[product.productType] || product.productType;
                       // For Trophy, show sizeLabel. For others, show material/color info
-                      const productDetails = product.sizeLabel 
-                        ? product.sizeLabel 
-                        : (product.wantsSticker === "receive" 
-                            ? "รับสติ๊กเกอร์" 
-                            : (product.displayName ? "-" : (product.material && !product.displayName ? product.material : (product.color ? "" : product.material || "-"))));
+                      const productDetails = product.sizeLabel
+                        ? product.sizeLabel
+                        : (product.wantsSticker === "receive"
+                          ? "รับสติ๊กเกอร์"
+                          : (product.displayName ? "-" : (product.material && !product.displayName ? product.material : (product.color ? "" : product.material || "-"))));
                       const quantity = product.quantity || parseInt(product.details?.quantity) || 1;
                       const unitPrice = product.unitPrice || null;
                       const totalPrice = unitPrice ? unitPrice * quantity : null;
@@ -3865,339 +3962,339 @@ const [estimationDetailOpen, setEstimationDetailOpen] = useState(false);
 
         {/* Section 6: Delivery Information */}
         {((watchedProductType && watchedMaterial) || savedProducts.length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>การจัดส่ง</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Delivery Type Selection */}
-            <div>
-              <h4 className="font-semibold mb-4">รูปแบบการรับสินค้า</h4>
-              <FormField
-                control={form.control}
-                name="deliveryType"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          setDeliveryType(value);
-                        }}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="parcel" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            จัดส่งพัสดุ
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="pickup" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            รับที่ร้าน
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Show pickup time if "รับที่ร้าน" is selected */}
-            {deliveryType === "pickup" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>การจัดส่ง</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Delivery Type Selection */}
               <div>
+                <h4 className="font-semibold mb-4">รูปแบบการรับสินค้า</h4>
                 <FormField
                   control={form.control}
-                  name="deliveryInfo.pickupTime"
+                  name="deliveryType"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>เวลาที่จะมารับ</FormLabel>
+                    <FormItem className="space-y-3">
                       <FormControl>
-                        <Input {...field} type="time" placeholder="เลือกเวลา" />
+                        <RadioGroup
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setDeliveryType(value);
+                          }}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="parcel" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              จัดส่งพัสดุ
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="pickup" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              รับที่ร้าน
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            )}
 
-            {/* Show delivery form if "จัดส่งพัสดุ" is selected */}
-            {deliveryType === "parcel" && (
-              <>
-                {/* 5.1 Recipient Information */}
+              {/* Show pickup time if "รับที่ร้าน" is selected */}
+              {deliveryType === "pickup" && (
                 <div>
-                  <h4 className="font-semibold mb-4">5.1 ข้อมูลผู้รับสินค้า</h4>
-              <div className="mb-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={updateRecipientInfo}
-                  className="text-sm"
-                >
-                  ใช้ข้อมูลลูกค้า
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="deliveryInfo.recipientName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ชื่อ-นามสกุลผู้รับ</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="deliveryInfo.recipientPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>เบอร์โทรศัพท์ติดต่อ</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-              </div>
-            </div>
-
-            {/* 5.2 Delivery Address */}
-            <div>
-              <h4 className="font-semibold mb-4">5.2 ที่อยู่สำหรับจัดส่ง</h4>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="deliveryInfo.address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>บ้านเลขที่ / หมู่บ้าน / อาคาร / ห้องเลขที่ ซอย / ถนน</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <FormField
                     control={form.control}
-                    name="deliveryInfo.province"
+                    name="deliveryInfo.pickupTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>จังหวัด</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="เลือกจังหวัด" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="bangkok">กรุงเทพมหานคร</SelectItem>
-                            <SelectItem value="chiangmai">เชียงใหม่</SelectItem>
-                            <SelectItem value="phuket">ภูเก็ต</SelectItem>
-                            {/* Add more provinces */}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="deliveryInfo.district"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>เขต/อำเภอ</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="เลือกเขต/อำเภอ" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="district1">เขต/อำเภอ 1</SelectItem>
-                            <SelectItem value="district2">เขต/อำเภอ 2</SelectItem>
-                            {/* Add more districts based on selected province */}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="deliveryInfo.subdistrict"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>แขวง/ตำบล</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="เลือกแขวง/ตำบล" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="subdistrict1">แขวง/ตำบล 1</SelectItem>
-                            <SelectItem value="subdistrict2">แขวง/ตำบล 2</SelectItem>
-                            {/* Add more subdistricts based on selected district */}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="deliveryInfo.postalCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>รหัสไปรษณีย์</FormLabel>
+                        <FormLabel>เวลาที่จะมารับ</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} type="time" placeholder="เลือกเวลา" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* 5.3 Delivery Options */}
-            <div>
-              <h4 className="font-semibold mb-4">5.3 ตัวเลือกการจัดส่ง</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="deliveryInfo.deliveryMethod"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>วิธีการจัดส่ง</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="เลือกวิธีการจัดส่ง" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ems">EMS</SelectItem>
-                          <SelectItem value="kerry">Kerry</SelectItem>
-                          <SelectItem value="flash">Flash</SelectItem>
-                          <SelectItem value="private_transport">ขนส่งเอกชน</SelectItem>
-                          <SelectItem value="pickup">นัดรับ</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Show delivery form if "จัดส่งพัสดุ" is selected */}
+              {deliveryType === "parcel" && (
+                <>
+                  {/* 5.1 Recipient Information */}
+                  <div>
+                    <h4 className="font-semibold mb-4">5.1 ข้อมูลผู้รับสินค้า</h4>
+                    <div className="mb-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={updateRecipientInfo}
+                        className="text-sm"
+                      >
+                        ใช้ข้อมูลลูกค้า
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="deliveryInfo.recipientName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ชื่อ-นามสกุลผู้รับ</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                <FormField
-                  control={form.control}
-                  name="deliveryInfo.preferredDeliveryDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>วันที่/เวลาที่ต้องการให้จัดส่ง</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
+                      <FormField
+                        control={form.control}
+                        name="deliveryInfo.recipientPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>เบอร์โทรศัพท์ติดต่อ</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                    </div>
+                  </div>
+
+                  {/* 5.2 Delivery Address */}
+                  <div>
+                    <h4 className="font-semibold mb-4">5.2 ที่อยู่สำหรับจัดส่ง</h4>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="deliveryInfo.address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>บ้านเลขที่ / หมู่บ้าน / อาคาร / ห้องเลขที่ ซอย / ถนน</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="deliveryInfo.province"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>จังหวัด</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="เลือกจังหวัด" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="bangkok">กรุงเทพมหานคร</SelectItem>
+                                  <SelectItem value="chiangmai">เชียงใหม่</SelectItem>
+                                  <SelectItem value="phuket">ภูเก็ต</SelectItem>
+                                  {/* Add more provinces */}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="deliveryInfo.district"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>เขต/อำเภอ</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="เลือกเขต/อำเภอ" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="district1">เขต/อำเภอ 1</SelectItem>
+                                  <SelectItem value="district2">เขต/อำเภอ 2</SelectItem>
+                                  {/* Add more districts based on selected province */}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="deliveryInfo.subdistrict"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>แขวง/ตำบล</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="เลือกแขวง/ตำบล" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="subdistrict1">แขวง/ตำบล 1</SelectItem>
+                                  <SelectItem value="subdistrict2">แขวง/ตำบล 2</SelectItem>
+                                  {/* Add more subdistricts based on selected district */}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="deliveryInfo.postalCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>รหัสไปรษณีย์</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5.3 Delivery Options */}
+                  <div>
+                    <h4 className="font-semibold mb-4">5.3 ตัวเลือกการจัดส่ง</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="deliveryInfo.deliveryMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>วิธีการจัดส่ง</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="เลือกวิธีการจัดส่ง" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="ems">EMS</SelectItem>
+                                <SelectItem value="kerry">Kerry</SelectItem>
+                                <SelectItem value="flash">Flash</SelectItem>
+                                <SelectItem value="private_transport">ขนส่งเอกชน</SelectItem>
+                                <SelectItem value="pickup">นัดรับ</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="deliveryInfo.preferredDeliveryDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>วันที่/เวลาที่ต้องการให้จัดส่ง</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>{watchedDeliveryDate ? format(watchedDeliveryDate, "PPP") : "เลือกวันที่"}</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value || watchedDeliveryDate}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                                  }
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 5.4 Additional Instructions */}
+                  <div>
+                    <h4 className="font-semibold mb-4">5.4 คำแนะนำเพิ่มเติมในการจัดส่ง</h4>
+                    <FormField
+                      control={form.control}
+                      name="deliveryInfo.deliveryInstructions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>คำแนะนำเพิ่มเติม</FormLabel>
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>{watchedDeliveryDate ? format(watchedDeliveryDate, "PPP") : "เลือกวันที่"}</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
+                            <Textarea {...field} placeholder="เช่น ฝากไว้กับ รปภ., โทรหาก่อนส่ง" />
                           </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value || watchedDeliveryDate}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0))
-                            }
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-                {/* 5.4 Additional Instructions */}
-                <div>
-                  <h4 className="font-semibold mb-4">5.4 คำแนะนำเพิ่มเติมในการจัดส่ง</h4>
-                  <FormField
-                    control={form.control}
-                    name="deliveryInfo.deliveryInstructions"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>คำแนะนำเพิ่มเติม</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} placeholder="เช่น ฝากไว้กับ รปภ., โทรหาก่อนส่ง" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 justify-end">
           <Button type="button" variant="outline" onClick={onCancel}>
-            ปุ่มยกเลิก
+            ยกเลิก
           </Button>
-          
-          <Button type="submit" variant="secondary">
-            ปุ่มบันทึก
+
+          <Button type="submit" variant="default" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "กำลังบันทึก..." : "บันทึกคำสั่งซื้อ"}
           </Button>
 
           {/* Conditional buttons based on product type */}
-          {(watchedProductType === "Medal" || watchedProductType === "Award" || 
+          {(watchedProductType === "Medal" || watchedProductType === "Award" ||
             ["Keychain", "Doll", "Lanyard", "Box packaging", "Bag", "Bottle", "อื่นๆ"].includes(watchedProductType)) && (
-            <Button type="button" onClick={handleEstimatePrice}>
-              ปุ่มประเมินราคา
-            </Button>
-          )}
+              <Button type="button" onClick={handleEstimatePrice}>
+                ปุ่มประเมินราคา
+              </Button>
+            )}
 
         </div>
       </form>

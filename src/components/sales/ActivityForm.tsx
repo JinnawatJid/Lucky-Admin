@@ -48,60 +48,42 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
 
     try {
       setLoading(true);
-      
-      if (activityData) {
-        // Update existing activity
-        const { error } = await supabase
-          .from('customer_activities')
-          .update({
-            activity_type: formData.activityType,
-            title: formData.title,
-            description: formData.description,
-            start_datetime: formData.startDateTime.toISOString(),
-            end_datetime: formData.endDateTime ? formData.endDateTime.toISOString() : null,
-            reminder_type: formData.reminder,
-            contact_person: formData.contactPerson || null,
-            responsible_person: formData.responsiblePerson || null,
-            status: formData.status,
-            priority: formData.priority
-          })
-          .eq('id', activityData.id);
 
-        if (error) throw error;
+      const payload = {
+        id: activityData?.id, // Include ID if updating
+        customer_id: customerId,
+        activity_type: formData.activityType,
+        title: formData.title,
+        description: formData.description,
+        start_datetime: formData.startDateTime.toISOString(),
+        end_datetime: formData.endDateTime ? formData.endDateTime.toISOString() : null,
+        reminder_type: formData.reminder,
+        contact_person: formData.contactPerson || null,
+        responsible_person: formData.responsiblePerson || null,
+        status: formData.status,
+        priority: formData.priority
+      };
 
+      const response = await fetch('https://finfinphone.com/api-lucky/admin/save_customer_activity.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
         toast({
           title: "สำเร็จ",
-          description: "อัปเดตกิจกรรมเรียบร้อยแล้ว"
+          description: activityData ? "อัปเดตกิจกรรมเรียบร้อยแล้ว" : "บันทึกกิจกรรมเรียบร้อยแล้ว"
         });
+        onSave();
       } else {
-        // Create new activity
-        const { error } = await supabase
-          .from('customer_activities')
-          .insert([
-            {
-              customer_id: customerId,
-              activity_type: formData.activityType,
-              title: formData.title,
-              description: formData.description,
-              start_datetime: formData.startDateTime.toISOString(),
-              end_datetime: formData.endDateTime ? formData.endDateTime.toISOString() : null,
-              reminder_type: formData.reminder,
-              contact_person: formData.contactPerson || null,
-              responsible_person: formData.responsiblePerson || null,
-              status: formData.status,
-              priority: formData.priority
-            }
-          ]);
-
-        if (error) throw error;
-
-        toast({
-          title: "สำเร็จ",
-          description: "บันทึกกิจกรรมเรียบร้อยแล้ว"
-        });
+        throw new Error(result.message || "เกิดข้อผิดพลาดในการบันทึก");
       }
 
-      onSave();
     } catch (error) {
       console.error('Error saving activity:', error);
       toast({
@@ -120,7 +102,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="activityType">ประเภทกิจกรรม</Label>
-          <Select value={formData.activityType} onValueChange={(value) => setFormData({...formData, activityType: value})}>
+          <Select value={formData.activityType} onValueChange={(value) => setFormData({ ...formData, activityType: value })}>
             <SelectTrigger>
               <SelectValue placeholder="เลือกประเภทกิจกรรม" />
             </SelectTrigger>
@@ -141,7 +123,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
           <Input
             id="title"
             value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="ระบุหัวข้อกิจกรรม"
           />
         </div>
@@ -153,7 +135,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
         <Textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="ระบุรายละเอียดของกิจกรรม"
           className="min-h-[100px]"
         />
@@ -187,14 +169,14 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
                       newDateTime.setFullYear(date.getFullYear());
                       newDateTime.setMonth(date.getMonth());
                       newDateTime.setDate(date.getDate());
-                      setFormData({...formData, startDateTime: newDateTime});
+                      setFormData({ ...formData, startDateTime: newDateTime });
                     }
                   }}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
-            
+
             <Input
               type="time"
               value={format(formData.startDateTime, "HH:mm")}
@@ -202,7 +184,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
                 const [hours, minutes] = e.target.value.split(':');
                 const newDateTime = new Date(formData.startDateTime);
                 newDateTime.setHours(parseInt(hours), parseInt(minutes));
-                setFormData({...formData, startDateTime: newDateTime});
+                setFormData({ ...formData, startDateTime: newDateTime });
               }}
               className="w-32"
             />
@@ -235,16 +217,16 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
                       const newDateTime = new Date(date);
                       newDateTime.setHours(currentTime.getHours());
                       newDateTime.setMinutes(currentTime.getMinutes());
-                      setFormData({...formData, endDateTime: newDateTime});
+                      setFormData({ ...formData, endDateTime: newDateTime });
                     } else {
-                      setFormData({...formData, endDateTime: null});
+                      setFormData({ ...formData, endDateTime: null });
                     }
                   }}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
-            
+
             <Input
               type="time"
               value={formData.endDateTime ? format(formData.endDateTime, "HH:mm") : ""}
@@ -252,7 +234,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
                 const [hours, minutes] = e.target.value.split(':');
                 const newDateTime = formData.endDateTime || new Date(formData.startDateTime);
                 newDateTime.setHours(parseInt(hours), parseInt(minutes));
-                setFormData({...formData, endDateTime: newDateTime});
+                setFormData({ ...formData, endDateTime: newDateTime });
               }}
               className="w-32"
             />
@@ -263,7 +245,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
       {/* Reminder */}
       <div className="space-y-2">
         <Label htmlFor="reminder">การแจ้งเตือน</Label>
-        <Select value={formData.reminder} onValueChange={(value) => setFormData({...formData, reminder: value})}>
+        <Select value={formData.reminder} onValueChange={(value) => setFormData({ ...formData, reminder: value })}>
           <SelectTrigger>
             <SelectValue placeholder="เลือกการแจ้งเตือน" />
           </SelectTrigger>
@@ -285,7 +267,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
           <Input
             id="contactPerson"
             value={formData.contactPerson}
-            onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
             placeholder="ชื่อผู้ติดต่อ"
           />
         </div>
@@ -295,7 +277,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
           <Input
             id="responsiblePerson"
             value={formData.responsiblePerson}
-            onChange={(e) => setFormData({...formData, responsiblePerson: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, responsiblePerson: e.target.value })}
             placeholder="ชื่อผู้รับผิดชอบ"
           />
         </div>
@@ -305,7 +287,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="status">สถานะ</Label>
-          <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+          <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
             <SelectTrigger>
               <SelectValue placeholder="เลือกสถานะ" />
             </SelectTrigger>
@@ -320,7 +302,7 @@ export function ActivityForm({ customerId, onSave, onCancel, activityData }: Act
 
         <div className="space-y-2">
           <Label htmlFor="priority">ระดับความสำคัญ</Label>
-          <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value})}>
+          <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
             <SelectTrigger>
               <SelectValue placeholder="เลือกระดับความสำคัญ" />
             </SelectTrigger>

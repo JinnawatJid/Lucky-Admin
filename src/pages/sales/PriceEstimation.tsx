@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Edit, Eye, Trash2, ShoppingCart, Clock, FileCheck, CheckCircle, Calendar, Filter } from "lucide-react";
+import { Search, Plus, Eye, ShoppingCart, Clock, FileCheck, CheckCircle, Calendar, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
@@ -29,26 +29,39 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import axios from "axios";
+
+// Define interface for API response
+interface PriceEstimationData {
+  id: string; // Changed to string as backend returns UUID/string ID
+  date: string;
+  jobName: string;
+  lineName: string;
+  customerName: string;
+  productType: string;
+  quantity: number;
+  price: number;
+  status: string;
+  salesOwner: string | null;
+}
 
 export default function PriceEstimation() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedEstimation, setSelectedEstimation] = useState<number | null>(null);
+  const [selectedEstimation, setSelectedEstimation] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [productTypeFilter, setProductTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // State for data
+  const [estimations, setEstimations] = useState<PriceEstimationData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Product types list
   const productTypesList = [
@@ -69,75 +82,67 @@ export default function PriceEstimation() {
     "ที่ทับกระดาษ"
   ];
 
-  // Mock data for price estimations
-  const estimations = [
-    {
-      id: 1,
-      date: "2024-01-15",
-      lineName: "customer_line_001",
-      productType: "เหรียญสั่งผลิต",
-      quantity: 100,
-      price: 15000,
-      status: "อยู่ระหว่างการประเมินราคา"
-    },
-    {
-      id: 2,
-      date: "2024-01-14",
-      lineName: "customer_line_002",
-      productType: "เหรียญสั่งผลิต",
-      quantity: 50,
-      price: 25000,
-      status: "อนุมัติแล้ว"
-    },
-    {
-      id: 3,
-      date: "2024-01-13",
-      lineName: "customer_line_003",
-      productType: "โล่สั่งผลิต",
-      quantity: 200,
-      price: 8000,
-      status: "ยกเลิก"
-    },
-    {
-      id: 4,
-      date: "2024-01-12",
-      lineName: "customer_line_004",
-      productType: "กระเป๋า",
-      quantity: 150,
-      price: 18000,
-      status: "รอจัดซื้อส่งประเมิน"
-    },
-    {
-      id: 5,
-      date: "2024-01-11",
-      lineName: "customer_line_005",
-      productType: "แก้ว",
-      quantity: 75,
-      price: 32000,
-      status: "รอจัดซื้อส่งประเมิน"
-    },
-    {
-      id: 6,
-      date: "2024-01-16",
-      lineName: "nun",
-      productType: "เหรียญสั่งผลิต",
-      quantity: 100,
-      price: 20000,
-      status: "อนุมัติแล้ว"
+  // Fetch data from API
+  const fetchEstimations = async () => {
+    try {
+      setLoading(true);
+
+      // Build query params
+      const params = new URLSearchParams();
+      if (searchTerm) params.append("search", searchTerm);
+      if (statusFilter !== "all") params.append("status", statusFilter);
+      if (productTypeFilter !== "all") params.append("productType", productTypeFilter);
+      if (startDate) params.append("startDate", format(startDate, "yyyy-MM-dd"));
+      if (endDate) params.append("endDate", format(endDate, "yyyy-MM-dd"));
+
+      // For verification environment, we need to point to localhost
+      // In production, this would be https://finfinphone.com/api-lucky...
+      const baseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:8000/admin/price_estimation/get_price_estimations.php'
+        : 'https://finfinphone.com/api-lucky/admin/price_estimation/get_price_estimations.php';
+
+      const response = await axios.get<PriceEstimationData[]>(
+        `${baseUrl}?${params.toString()}`
+      );
+
+      console.log("API Response:", response.data);
+      setEstimations(response.data);
+    } catch (error) {
+      console.error("Error fetching price estimations:", error);
+      toast.error("ไม่สามารถดึงข้อมูลรายการประเมินราคาได้");
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Get product types for filter (use the predefined list)
-  const productTypes = productTypesList;
+  // Initial fetch and fetch on filter change
+  // Note: We use a debounce or direct effect depending on UX preference.
+  // For now, let's trigger fetch when filters change, except for text search which we might want to debounce or handle via button,
+  // but the original code did client-side filtering.
+  // Since we moved to server-side filtering (implied by API having search params), we should call API.
+  // However, to keep it snappy and simple as per request, let's try to fetch all (or filtered) when dependencies change.
 
-  // Status counts for summary cards
+  useEffect(() => {
+    // Debounce search term to avoid too many requests
+    const timer = setTimeout(() => {
+      fetchEstimations();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, startDate, endDate, productTypeFilter, statusFilter]);
+
+
+  // Status counts - calculate from current data or fetch summary from API?
+  // For now, let's calculate from the fetched data (client-side summary of current view)
+  // OR ideally, we should have a separate API for summary if pagination is involved.
+  // Assuming no pagination for now as per `get_price_estimations.php` implementation (returns all matching).
   const statusCounts = useMemo(() => {
     return {
       waiting: estimations.filter(e => e.status === "รอจัดซื้อส่งประเมิน").length,
       inProgress: estimations.filter(e => e.status === "อยู่ระหว่างการประเมินราคา").length,
       approved: estimations.filter(e => e.status === "อนุมัติแล้ว").length,
     };
-  }, []);
+  }, [estimations]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -154,41 +159,38 @@ export default function PriceEstimation() {
     }
   };
 
-  const filteredEstimations = useMemo(() => {
-    return estimations.filter(estimation => {
-      const matchesSearch = 
-        estimation.lineName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        estimation.productType.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const estimationDate = new Date(estimation.date);
-      const matchesDateRange = 
-        (!startDate || estimationDate >= startDate) && 
-        (!endDate || estimationDate <= endDate);
-      
-      const matchesProductType = productTypeFilter === "all" || 
-        estimation.productType === productTypeFilter;
-      
-      const matchesStatus = statusFilter === "all" || 
-        estimation.status === statusFilter;
+  // No longer need client-side filtering `filteredEstimations` since we do it server-side.
+  // But wait, the API supports filtering parameters.
+  // The original code did client-side filtering on `estimations`.
+  // If we fetched ALL data, we could keep client-side filtering.
+  // But `get_price_estimations.php` implements filtering logic (SQL `WHERE`).
+  // So `estimations` state ALREADY contains filtered data.
 
-      return matchesSearch && matchesDateRange && matchesProductType && matchesStatus;
-    });
-  }, [searchTerm, startDate, endDate, productTypeFilter, statusFilter]);
-
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     setSelectedEstimation(id);
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedEstimation) {
-      toast.success("ลบรายการประเมินราคาเรียบร้อยแล้ว");
+      // TODO: Implement delete API call here when `delete_price_estimation.php` is ready
+      // For now, just simulate UI update
+      try {
+        // await axios.post(..., { id: selectedEstimation });
+        // toast.success("ลบรายการประเมินราคาเรียบร้อยแล้ว");
+        // fetchEstimations();
+
+        // Since API isn't ready, we just show toast and maybe optimistically remove from UI or do nothing
+        toast.info("Delete API is not implemented yet");
+      } catch (e) {
+        toast.error("Failed to delete");
+      }
       setDeleteDialogOpen(false);
       setSelectedEstimation(null);
     }
   };
 
-  const handleCreateOrder = (estimation: typeof estimations[0]) => {
+  const handleCreateOrder = (estimation: PriceEstimationData) => {
     navigate("/sales/create-order", { 
       state: { 
         fromEstimation: true,
@@ -207,7 +209,7 @@ export default function PriceEstimation() {
   };
 
   // Render action buttons based on status
-  const renderActionButtons = (estimation: typeof estimations[0]) => {
+  const renderActionButtons = (estimation: PriceEstimationData) => {
     const { status, id } = estimation;
 
     const ViewButton = () => (
@@ -411,7 +413,7 @@ export default function PriceEstimation() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">ประเภทสินค้าทั้งหมด</SelectItem>
-                  {productTypes.map(type => (
+                  {productTypesList.map(type => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>
@@ -445,7 +447,7 @@ export default function PriceEstimation() {
             <TableHeader>
               <TableRow>
                 <TableHead>วันที่ประเมินราคา</TableHead>
-                <TableHead>ชื่อ LINE</TableHead>
+                <TableHead>ชื่อ LINE / ลูกค้า</TableHead>
                 <TableHead>ประเภทสินค้า</TableHead>
                 <TableHead className="text-right">จำนวน</TableHead>
                 <TableHead>สถานะ</TableHead>
@@ -453,19 +455,32 @@ export default function PriceEstimation() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEstimations.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    กำลังโหลดข้อมูล...
+                  </TableCell>
+                </TableRow>
+              ) : estimations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     ไม่พบรายการประเมินราคา
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEstimations.map((estimation) => (
+                estimations.map((estimation) => (
                   <TableRow key={estimation.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
-                      {format(new Date(estimation.date), "d/M/yyyy", { locale: th })}
+                      {estimation.date ? format(new Date(estimation.date), "d/M/yyyy", { locale: th }) : "-"}
                     </TableCell>
-                    <TableCell>{estimation.lineName}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                         <span>{estimation.lineName}</span>
+                         {estimation.customerName && estimation.customerName !== estimation.lineName && (
+                           <span className="text-xs text-muted-foreground">{estimation.customerName}</span>
+                         )}
+                      </div>
+                    </TableCell>
                     <TableCell>{estimation.productType}</TableCell>
                     <TableCell className="text-right">{estimation.quantity.toLocaleString()}</TableCell>
                     <TableCell>

@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { NestedProductSelect } from "@/components/sales/NestedProductSelect";
-import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { salesApi } from "@/services/salesApi";
 
@@ -283,27 +282,27 @@ export default function AddPriceEstimation() {
   // File attachments
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
-  // Fetch customers from Supabase
+  // Fetch customers from API
   useEffect(() => {
     const fetchCustomers = async () => {
       setIsLoadingCustomers(true);
       try {
-        const { data, error } = await supabase
-          .from('customers')
-          .select('id, company_name, contact_name, phone_numbers, line_id, emails, customer_type, notes')
-          .order('company_name');
-        
-        if (error) throw error;
+        const data = await salesApi.getCustomers();
         setCustomers(data || []);
       } catch (error) {
         console.error('Error fetching customers:', error);
+        toast({
+          title: "เกิดข้อผิดพลาด",
+          description: "ไม่สามารถโหลดข้อมูลลูกค้าได้",
+          variant: "destructive",
+        });
       } finally {
         setIsLoadingCustomers(false);
       }
     };
     
     fetchCustomers();
-  }, []);
+  }, [toast]);
 
   // Filter customers based on search
   useEffect(() => {

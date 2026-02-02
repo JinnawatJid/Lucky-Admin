@@ -44,13 +44,32 @@ if ($result->num_rows > 0) {
     $customerName = !empty($row['company_name']) ? $row['company_name'] :
                     (!empty($row['contact_name']) ? $row['contact_name'] : 'N/A');
 
-    // Decode Customer JSON fields
-    $phoneNumbers = !empty($row['phone_numbers']) ? json_decode($row['phone_numbers'], true) : [];
-    $emails = !empty($row['emails']) ? json_decode($row['emails'], true) : [];
+    // Decode Customer JSON fields with fallback for legacy/plain text data
+    $phoneNumbers = [];
+    if (!empty($row['phone_numbers'])) {
+        $decoded = json_decode($row['phone_numbers'], true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $phoneNumbers = $decoded;
+        } else {
+            // Fallback: treat as single string value
+            $phoneNumbers = [$row['phone_numbers']];
+        }
+    }
+
+    $emails = [];
+    if (!empty($row['emails'])) {
+        $decoded = json_decode($row['emails'], true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $emails = $decoded;
+        } else {
+            // Fallback: treat as single string value
+            $emails = [$row['emails']];
+        }
+    }
 
     // Get first phone/email for display
-    $mainPhone = !empty($phoneNumbers) ? (is_array($phoneNumbers) ? $phoneNumbers[0] : $phoneNumbers) : '-';
-    $mainEmail = !empty($emails) ? (is_array($emails) ? $emails[0] : $emails) : '-';
+    $mainPhone = !empty($phoneNumbers) ? $phoneNumbers[0] : '-';
+    $mainEmail = !empty($emails) ? $emails[0] : '-';
 
     // --- Process Price Estimation JSON fields ---
     $selectedColors = !empty($row['selected_colors']) ? json_decode($row['selected_colors'], true) : [];

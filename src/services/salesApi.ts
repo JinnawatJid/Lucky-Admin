@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const BASE_URL = 'https://finfinphone.com/api-lucky/admin/price_estimation';
+const ADMIN_BASE_URL = 'https://finfinphone.com/api-lucky/admin';
 
 export interface PriceEstimationData {
   id?: string;
@@ -85,6 +86,16 @@ export const salesApi = {
       return response.data;
     } catch (error) {
       console.error('Error fetching price estimation detail:', error);
+      throw error;
+    }
+  },
+
+  getCustomers: async () => {
+    try {
+      const response = await axios.get(`${ADMIN_BASE_URL}/get_customers.php`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching customers:', error);
       throw error;
     }
   },

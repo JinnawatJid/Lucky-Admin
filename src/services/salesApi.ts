@@ -78,4 +78,14 @@ export const salesApi = {
       throw error;
     }
   },
+
+  getPriceEstimationDetail: async (id: string) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/get_price_estimation_detail.php?id=${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching price estimation detail:', error);
+      throw error;
+    }
+  },
 };

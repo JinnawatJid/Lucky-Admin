@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,9 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Edit, Printer, ImageIcon, FileText, X, History, User, Clock, CheckCircle2, CircleDot, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Printer, ImageIcon, FileText, X, History, User, Clock, CheckCircle2, CircleDot, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import sampleArtwork from "@/assets/sample-artwork.png";
+import { salesApi } from "@/services/salesApi";
 
 // Interface for design file with upload history
 interface DesignFileUpload {
@@ -39,6 +40,30 @@ export default function PriceEstimationDetail() {
   const [isUploadHistoryOpen, setIsUploadHistoryOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
+  // Data state
+  const [estimation, setEstimation] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        const data = await salesApi.getPriceEstimationDetail(id);
+        setEstimation(data);
+        setError(null);
+      } catch (err) {
+        console.error(err);
+        setError("ไม่สามารถดึงข้อมูลรายละเอียดการประเมินราคาได้");
+        toast.error("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDetail();
+  }, [id]);
+
   const handleDelete = () => {
     // Perform delete action
     toast.success("ลบรายการประเมินราคาเรียบร้อยแล้ว");
@@ -56,100 +81,16 @@ export default function PriceEstimationDetail() {
   // Get the latest uploaded file (first item in history)
   const latestDesignFile = designFileHistory.length > 0 ? designFileHistory[0] : null;
 
-  // Mock data - replace with actual data fetching
-  const estimations = [
-    {
-      id: 1,
-      status: "อยู่ระหว่างการประเมินราคา",
-      // ข้อมูลทั่วไปลูกค้า
-      customerName: "บริษัท ABC จำกัด",
-      customerPhone: "081-234-5678",
-      customerLineId: "customer_line_001",
-      customerEmail: "somchai@abc.com",
-      customerTags: "ลูกค้าประจำ, องค์กร",
-      // ข้อมูลการตีราคา
-      estimateDate: "2024-01-15",
-      salesOwner: "พนักงานขาย A",
-      jobName: "งานวิ่งมาราธอน 2024",
-      eventDate: "2024-03-01",
-      productCategory: "สินค้าสั่งผลิต",
-      productType: "เหรียญสั่งผลิต",
-      hasDesign: "มีแบบ",
-      material: "ซิงค์อัลลอย",
-      quantity: 100,
-      budget: 25000,
-      // รายละเอียดสำหรับประเมินราคา (เหรียญ)
-      medalSize: "5 ซม.",
-      medalThickness: "5 มิล",
-      selectedColors: ["shinny gold (สีทองเงา)", "shinny silver (สีเงินเงา)"],
-      frontDetails: ["พิมพ์โลโก้", "แกะสลักข้อความ"],
-      backDetails: ["ลงน้ำยาป้องกันสนิม"],
-      lanyardSize: "2 × 90 ซม",
-      lanyardPatterns: "3",
-      // หมายเหตุ
-      notes: "ต้องการผลิตภายใน 2 สัปดาห์",
-      // ไฟล์แนบ
-      attachedFiles: ["design_v1.pdf", "logo.ai"]
-    },
-    {
-      id: 2,
-      status: "อนุมัติแล้ว",
-      // ข้อมูลทั่วไปลูกค้า
-      customerName: "โรงเรียน XYZ",
-      customerPhone: "089-876-5432",
-      customerLineId: "xyz_school",
-      customerEmail: "somying@xyz.ac.th",
-      customerTags: "สถานศึกษา",
-      // ข้อมูลการตีราคา
-      estimateDate: "2024-01-14",
-      salesOwner: "พนักงานขาย B",
-      jobName: "งานแข่งขันกีฬาสี",
-      eventDate: "2024-02-20",
-      productCategory: "สินค้าสั่งผลิต",
-      productType: "เหรียญสั่งผลิต",
-      hasDesign: "มีแบบ",
-      material: "ซิงค์อัลลอย",
-      quantity: 50,
-      budget: 35000,
-      // รายละเอียดโล่
-      awardDesignDetails: "โล่คริสตัลทรงสี่เหลี่ยม ขนาด 8 นิ้ว พิมพ์ UV สีเต็มใบ",
-      plaqueOption: "มี",
-      plaqueText: "ผู้บริหารดีเด่น ประจำปี 2567",
-      notes: "สำหรับงานแข่งขันกีฬาสี",
-      attachedFiles: ["award_design.pdf"]
-    },
-    {
-      id: 3,
-      status: "ยกเลิก",
-      // ข้อมูลทั่วไปลูกค้า
-      customerName: "องค์กร DEF",
-      customerPhone: "092-345-6789",
-      customerLineId: "def_org",
-      customerEmail: "somsri@def.org",
-      customerTags: "องค์กร",
-      // ข้อมูลการตีราคา
-      estimateDate: "2024-01-13",
-      salesOwner: "พนักงานขาย C",
-      jobName: "สายคล้องบัตรพนักงาน",
-      eventDate: "2024-04-01",
-      productCategory: "หมวดสายคล้อง",
-      productType: "สายคล้อง",
-      hasDesign: "มีแบบ",
-      material: "โพลีสกรีน",
-      quantity: 1000,
-      budget: 8000,
-      // รายละเอียดสายคล้อง
-      lanyardSize: "2 × 90 ซม",
-      lanyardPatterns: "2",
-      genericDesignDetails: "สายคล้องโพลีสกรีน พิมพ์โลโก้บริษัท 2 สี ติดตัวล็อคพลาสติก",
-      notes: "ลูกค้าเปลี่ยนใจใช้ผู้ผลิตรายอื่น",
-      attachedFiles: []
-    }
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">กำลังโหลดข้อมูล...</span>
+      </div>
+    );
+  }
 
-  const estimation = estimations.find(e => e.id === Number(id));
-
-  if (!estimation) {
+  if (error || !estimation) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -160,7 +101,7 @@ export default function PriceEstimationDetail() {
         </div>
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">ไม่พบข้อมูลการประเมินราคา</p>
+            <p className="text-muted-foreground">{error || "ไม่พบข้อมูลการประเมินราคา"}</p>
           </CardContent>
         </Card>
       </div>
@@ -187,6 +128,12 @@ export default function PriceEstimationDetail() {
   const isAward = estimation.productType === "โล่สั่งผลิต";
   const isLanyard = estimation.productCategory === "หมวดสายคล้อง";
 
+  // Calculate Unit Price placeholder (e.g. Total Budget / Quantity) just for display if needed
+  // Note: Real calculation logic resides in backend or specific business logic
+  const unitPrice = estimation.quantity > 0 && estimation.budget > 0
+    ? Math.round(estimation.budget / estimation.quantity)
+    : 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -199,7 +146,7 @@ export default function PriceEstimationDetail() {
           <div>
             <h1 className="text-3xl font-bold">รายละเอียดการประเมินราคา</h1>
             <p className="text-muted-foreground">
-              รหัส: {estimation.customerLineId} | วันที่: {new Date(estimation.estimateDate).toLocaleDateString('th-TH')}
+              รหัส: {estimation.customerLineId || '-'} | วันที่: {estimation.estimateDate ? new Date(estimation.estimateDate).toLocaleDateString('th-TH') : '-'}
             </p>
           </div>
         </div>
@@ -443,7 +390,7 @@ export default function PriceEstimationDetail() {
             <div className="pt-4 border-t">
               <p className="text-sm font-medium text-muted-foreground mb-3">ไฟล์แนบจากลูกค้า</p>
               <div className="flex flex-wrap gap-3">
-                {estimation.attachedFiles.map((file, index) => (
+                {estimation.attachedFiles.map((file: string, index: number) => (
                   <div 
                     key={index} 
                     className="flex items-center gap-2 bg-muted/50 hover:bg-muted rounded-lg px-4 py-2.5 border cursor-pointer transition-colors group"
@@ -485,7 +432,7 @@ export default function PriceEstimationDetail() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2">สี (เลือกได้หลายรายการ)</p>
                   <div className="flex flex-wrap gap-2">
-                    {estimation.selectedColors.map((color, index) => (
+                    {estimation.selectedColors.map((color: string, index: number) => (
                       <Badge key={index} variant="outline">{color}</Badge>
                     ))}
                   </div>
@@ -496,7 +443,7 @@ export default function PriceEstimationDetail() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2">รายละเอียดด้านหน้า (เลือกได้หลายรายการ)</p>
                   <div className="flex flex-wrap gap-2">
-                    {estimation.frontDetails.map((detail, index) => (
+                    {estimation.frontDetails.map((detail: string, index: number) => (
                       <Badge key={index} variant="secondary">{detail}</Badge>
                     ))}
                   </div>
@@ -507,7 +454,7 @@ export default function PriceEstimationDetail() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2">รายละเอียดด้านหลัง (เลือกได้หลายรายการ)</p>
                   <div className="flex flex-wrap gap-2">
-                    {estimation.backDetails.map((detail, index) => (
+                    {estimation.backDetails.map((detail: string, index: number) => (
                       <Badge key={index} variant="secondary">{detail}</Badge>
                     ))}
                   </div>
@@ -634,7 +581,7 @@ export default function PriceEstimationDetail() {
               <div className="text-center mb-4">
                 <p className="text-sm text-muted-foreground mb-1">ราคาต่อหน่วย</p>
                 <p className="text-4xl font-bold text-green-600 dark:text-green-400">
-                  63 <span className="text-lg font-medium">บาท / เหรียญ</span>
+                  {unitPrice.toLocaleString()} <span className="text-lg font-medium">บาท / {estimation.productType === "เหรียญสั่งผลิต" ? "เหรียญ" : "ชิ้น"}</span>
                 </p>
               </div>
               
@@ -650,7 +597,7 @@ export default function PriceEstimationDetail() {
               <div className="flex justify-between items-center bg-white/50 dark:bg-black/20 rounded-lg p-3">
                 <span className="font-medium">ราคารวม</span>
                 <span className="text-2xl font-bold text-primary">
-                  {(63 * estimation.quantity).toLocaleString()} <span className="text-base font-medium">บาท</span>
+                  {estimation.budget.toLocaleString()} <span className="text-base font-medium">บาท</span>
                 </span>
               </div>
             </div>

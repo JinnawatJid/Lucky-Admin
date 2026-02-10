@@ -24,8 +24,8 @@ The following API endpoints and frontend integrations are required to complete t
     - Currently, it might be mocking the upload or not persisting it.
 
 ## 4. Delete (`delete_price_estimation.php`)
-- [ ] **Backend:** Create endpoint to soft-delete (update status to 'deleted') or hard-delete a price estimation.
-- [ ] **Frontend:** Add delete functionality to the List View and potentially the Detail View.
+- [x] **Backend:** Create endpoint to soft-delete (update status to 'deleted') or hard-delete a price estimation.
+- [x] **Frontend:** Add delete functionality to the List View and potentially the Detail View.
 
 ## 5. Deployment
 - [ ] Run `db_schema.sql` (Already done for the main table, check if updates are needed).

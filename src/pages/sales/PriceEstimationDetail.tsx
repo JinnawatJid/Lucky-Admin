@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import sampleArtwork from "@/assets/sample-artwork.png";
 import { salesApi } from "@/services/salesApi";
 
+const UPLOAD_BASE_URL = "https://finfinphone.com/api-lucky";
+
 // Interface for design file with upload history
 interface DesignFileUpload {
   fileName: string;
@@ -397,15 +399,25 @@ export default function PriceEstimationDetail() {
             <div className="pt-4 border-t">
               <p className="text-sm font-medium text-muted-foreground mb-3">ไฟล์แนบจากลูกค้า</p>
               <div className="flex flex-wrap gap-3">
-                {estimation.attachedFiles.map((file: string, index: number) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center gap-2 bg-muted/50 hover:bg-muted rounded-lg px-4 py-2.5 border cursor-pointer transition-colors group"
-                  >
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium group-hover:text-primary transition-colors">{file}</span>
-                  </div>
-                ))}
+                {estimation.attachedFiles.map((file: string, index: number) => {
+                  const fileName = file.split('/').pop() || file;
+                  const displayName = fileName.replace(/^\d+_/, '');
+
+                  return (
+                    <a
+                      key={index}
+                      href={`${UPLOAD_BASE_URL}/${file}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 bg-muted/50 hover:bg-muted rounded-lg px-4 py-2.5 border cursor-pointer transition-colors group no-underline"
+                    >
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
+                        {displayName}
+                      </span>
+                    </a>
+                  );
+                })}
               </div>
             </div>
           )}

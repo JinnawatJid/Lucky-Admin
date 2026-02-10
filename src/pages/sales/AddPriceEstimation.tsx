@@ -283,6 +283,7 @@ export default function AddPriceEstimation() {
 
   // File attachments
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [existingFiles, setExistingFiles] = useState<string[]>([]); // For Edit Mode
 
   // Fetch customers from API
   useEffect(() => {
@@ -328,6 +329,11 @@ export default function AddPriceEstimation() {
         setMaterial(data.material || "");
         setHasDesign(data.hasDesign || "");
         setDesignDescription(data.genericDesignDetails || ""); // Map generic details to description if needed, or specific field
+
+        // Files
+        if (data.attachedFiles && Array.isArray(data.attachedFiles)) {
+          setExistingFiles(data.attachedFiles);
+        }
 
         // Medal specific
         setMedalSize(data.medalSize || "");
@@ -795,6 +801,10 @@ export default function AddPriceEstimation() {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeExistingFile = (index: number) => {
+    setExistingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSave = async () => {
     // Validate customer key (phone or line_id required) - skip if existing customer selected
     if (!selectedCustomerId && !customerPhone && !customerLineId) {
@@ -852,6 +862,35 @@ export default function AddPriceEstimation() {
     setShowLanyardSummaryPopup(false);
     
     try {
+      // Upload new files first
+      const uploadedFilePaths: string[] = [];
+
+      if (attachedFiles.length > 0) {
+        // Show loading toast if there are files to upload
+        toast({
+          title: "กำลังบันทึก...",
+          description: `กำลังอัปโหลด ${attachedFiles.length} ไฟล์`,
+        });
+
+        try {
+          for (const file of attachedFiles) {
+            const path = await salesApi.uploadFile(file);
+            uploadedFilePaths.push(path);
+          }
+        } catch (error) {
+          console.error("Upload error:", error);
+          toast({
+            title: "อัปโหลดไฟล์ล้มเหลว",
+            description: "เกิดข้อผิดพลาดในการอัปโหลดไฟล์ กรุณาลองใหม่",
+            variant: "destructive",
+          });
+          return; // Stop saving if upload fails
+        }
+      }
+
+      // Combine with existing files
+      const finalAttachedFiles = [...existingFiles, ...uploadedFilePaths];
+
       // Prepare payload for API
       const payload = {
         id: isEditMode ? id : undefined, // Include ID for update
@@ -901,8 +940,8 @@ export default function AddPriceEstimation() {
         height,
         thickness,
 
-        // Files (names only for now as upload endpoint is pending)
-        attachedFiles: attachedFiles.map(f => f.name),
+        // Files (send paths)
+        attachedFiles: finalAttachedFiles,
       };
 
       await salesApi.savePriceEstimation(payload);
@@ -2202,18 +2241,48 @@ export default function AddPriceEstimation() {
             </div>
 
             {/* แสดงรายการไฟล์ที่แนบ */}
-            {attachedFiles.length > 0 && (
+            {(attachedFiles.length > 0 || existingFiles.length > 0) && (
               <div className="space-y-2">
-                <Label>ไฟล์ที่แนบ ({attachedFiles.length} ไฟล์)</Label>
+                <Label>ไฟล์ที่แนบ ({attachedFiles.length + existingFiles.length} ไฟล์)</Label>
                 <div className="space-y-2">
+                  {/* Existing Files (From Server) */}
+                  {existingFiles.map((filePath, index) => {
+                     // Extract filename from path (e.g. uploads/price_estimation/123_test.jpg -> 123_test.jpg)
+                     const fileName = filePath.split('/').pop() || filePath;
+                     // Clean up timestamp prefix for display if desired (optional, keeping it simple for now)
+                     const displayName = fileName.replace(/^\d+_/, '');
+
+                     return (
+                      <div key={`existing-${index}`} className="flex items-center justify-between p-2 bg-blue-50/50 border border-blue-100 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-blue-500" />
+                          <a href={`/${filePath}`} target="_blank" rel="noreferrer" className="text-sm truncate max-w-xs text-blue-600 hover:underline">
+                            {displayName}
+                          </a>
+                          <Badge variant="secondary" className="text-[10px] h-5">เดิม</Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeExistingFile(index)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                     );
+                  })}
+
+                  {/* New Files (Pending Upload) */}
                   {attachedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                    <div key={`new-${index}`} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm truncate max-w-xs">{file.name}</span>
                         <span className="text-xs text-muted-foreground">
                           ({(file.size / 1024).toFixed(1)} KB)
                         </span>
+                        <Badge variant="outline" className="text-[10px] h-5 bg-yellow-50 text-yellow-600 border-yellow-200">รออัปโหลด</Badge>
                       </div>
                       <Button 
                         variant="ghost" 
